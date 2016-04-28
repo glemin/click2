@@ -272,10 +272,12 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                                     i = old_i;
                                 }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
                             } else {
-                                errh->error("net was followed by an unparsable argument"); return -1;
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    errh->error("net was followed by an unparsable argument"); return -1;
+                                } else {
+                                    errh->error("net mask was followed by an unparsable argument"); return -1;
+                                }
                             }
-
-
                         } else {
                             Token *token = SrcNetFactory::create_token(words_following_net, just_seen_a_not_keyword, an_operator, was_the_argument_written_in_CIDR_style);
                             if (token != NULL) {
@@ -286,7 +288,11 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                                     i = old_i;
                                 }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
                             } else {
-                                errh->error("net was followed by an unparsable argument"); return -1;
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    errh->error("net was followed by an unparsable argument"); return -1;
+                                } else {
+                                    errh->error("net mask was followed by an unparsable argument"); return -1;
+                                }
                             }
                         }
                     } else {
@@ -299,12 +305,16 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                                 i = old_i;
                             }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
                         } else {
-                            errh->error("net was followed by an unparsable argument"); return -1;
+                            if (was_the_argument_written_in_CIDR_style) {
+                                errh->error("net was followed by an unparsable argument"); return -1;
+                            } else {
+                                errh->error("net mask was followed by an unparsable argument"); return -1;
+                            }
                         }
                     }
-                    } else {
-                        errh->error("unkown keyword '%s' followed after src, the keyword should be host or port", current_word.c_str()); return -1;
-                    }
+                } else {
+                    errh->error("unkown keyword '%s' followed after src, the keyword should be host or port", current_word.c_str()); return -1;
+                }
             } else if (current_word == "dst") {
                 skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no second keyword followed after dst; dst should be followed by host or port");
                 if (current_word == "host") {
@@ -351,7 +361,74 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                         errh->error("dst port was followed by an unparsable argument '%s'; it should be an integer between 0 and 65535", current_word.c_str()); return -1;
                     }
                 } else if (current_word == "net") {
-
+                    bool was_the_argument_written_in_CIDR_style;    // This bool will get a value being passed to the SrcNetFactory
+                    Vector<String> words_following_net;     // A Vector keeping track of words following 'net'. Used to construct the correct token by the Token factory.
+                    skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no keyword or agument followed the dst net keyword");
+                    
+                    words_following_net.push_back(current_word);
+                    int old_i = i;          // When we did not use CIDR notation we need to go back to this 'i'
+                    i = skip_blanks(to_be_lexed_string, i);
+                    
+                    if (i != -1) {
+                        i = read_word(to_be_lexed_string, i, current_word);
+                        words_following_net.push_back(current_word);
+                        i = skip_blanks(to_be_lexed_string, i);
+                        if (i != -1) {
+                            i = read_word(to_be_lexed_string, i, current_word);
+                            click_chatter("onze i = %i", i);
+                            click_chatter("we hebben current_word = ", current_word.c_str());
+                            words_following_net.push_back(current_word);
+                            click_chatter("let us enter");
+                            Token *token = DstNetFactory::create_token(words_following_net, just_seen_a_not_keyword, an_operator, was_the_argument_written_in_CIDR_style);
+                            if (token != NULL) {
+                                click_chatter("it is not null");
+                                tokens.push_back(token);
+                                just_seen_a_not_keyword = false;
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    // the next to be read is really the next word to be read is further back, go back to the old i
+                                    i = old_i;
+                                }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
+                            } else {
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    errh->error("dst net was followed by an unparsable argument"); return -1;
+                                } else {
+                                    errh->error("dst net mask was followed by an unparsable argument"); return -1;
+                                }
+                            }
+                        } else {
+                            Token *token = DstNetFactory::create_token(words_following_net, just_seen_a_not_keyword, an_operator, was_the_argument_written_in_CIDR_style);
+                            if (token != NULL) {
+                                tokens.push_back(token);
+                                just_seen_a_not_keyword = false;
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    // the next to be read is really the next word to be read is further back, go back to the old i
+                                    i = old_i;
+                                }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
+                            } else {
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    errh->error("dst net was followed by an unparsable argument"); return -1;
+                                } else {
+                                    errh->error("dst net mask was followed by an unparsable argument"); return -1;
+                                }
+                            }
+                        }
+                    } else {
+                        Token *token = DstNetFactory::create_token(words_following_net, just_seen_a_not_keyword, an_operator, was_the_argument_written_in_CIDR_style);
+                        if (token != NULL) {
+                            tokens.push_back(token);
+                            just_seen_a_not_keyword = false;
+                            if (was_the_argument_written_in_CIDR_style) {
+                                // the next to be read is really the next word to be read is further back, go back to the old i
+                                i = old_i;
+                            }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
+                        } else {
+                            if (was_the_argument_written_in_CIDR_style) {
+                                errh->error("dst net was followed by an unparsable argument"); return -1;
+                            } else {
+                                errh->error("dst net mask was followed by an unparsable argument"); return -1;
+                            }
+                        }
+                    }
                 } else {
                     errh->error("unkown keyword '%s' followed after dst, the keyword should be host, port or net", current_word.c_str()); return -1;
                 }

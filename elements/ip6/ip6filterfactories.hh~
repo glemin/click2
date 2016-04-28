@@ -446,8 +446,7 @@ public:
             if ((IP6AddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip6address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
             words_following_net[0].length()-slash_location-1),result))) {
                 if (result >= 0 && result <= 128) {
-                    return new IP6SrcNetPrimitiveToken(ip6address, IP6Address::make_prefix(result), 
-                
+                    return new IP6SrcNetPrimitiveToken(ip6address, IP6Address::make_prefix(result), just_seen_a_not_keyword, an_operator);
                 } else {
                     return NULL;    // This is wrong; the IPv6 address prefix should be between 0 and 128
                 }
@@ -493,7 +492,57 @@ public:
         (void) just_seen_a_not_keyword;
         (void) an_operator;
         (void) was_written_in_CIDR_style;
-        return NULL;
+        
+        // Determine whether it is CIDR style
+        int slash_location;     // if there is a slash its location will be hold in this variable
+        if ((slash_location = words_following_net[0].find_left('/')) != -1) {        // It is CIDR style
+            click_chatter("CIDR style notation confirmed");
+            was_written_in_CIDR_style = true;
+            
+            IntArg *int_arg = new IntArg();
+            int result;
+            IPAddress ip4address;
+            click_chatter("words_following_net[0].substring(0,slash_location-1) = %s", words_following_net[0].substring(0,slash_location-1).c_str());
+            click_chatter("words_following_net.size()-slash_location = %i", words_following_net[0].length()-slash_location-1);
+            if ((IPAddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip4address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
+            words_following_net[0].length()-slash_location-1),result))) {
+                if (result >= 0 && result <= 32) {
+                
+                } else {
+                    return NULL;    // This is wrong; the IPv4 address prefix should be between 0 and 32  
+                }
+            }
+            IP6Address ip6address;
+            if ((IP6AddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip6address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
+            words_following_net[0].length()-slash_location-1),result))) {
+                if (result >= 0 && result <= 128) {
+                    return new IP6DstNetPrimitiveToken(ip6address, IP6Address::make_prefix(result), just_seen_a_not_keyword, an_operator);
+                } else {
+                    return NULL;    // This is wrong; the IPv6 address prefix should be between 0 and 128
+                }
+            } else {
+                return NULL;    // What is left of the slash is not an IPv4 or IPv6 address
+            }
+        } else {                                                            // It is NOT CIDR style
+            click_chatter("No CIDR style notation");
+            was_written_in_CIDR_style = false;
+            if (words_following_net.size() != 3) {
+                return NULL;                // It is not in CIDR style so 'net' must be followed by at least 3 arguments
+            }
+            if (words_following_net[1] != "mask") {
+                return NULL;                // It is not in CIDR style so 'net' must be followed by at least 3 arguments from which the second one must be 'mask'
+            }
+            IPAddress ip4address, ip4mask;
+            if ((IPAddressArg().parse(words_following_net[0], ip4address)) && (IPAddressArg().parse(words_following_net[2], ip4mask))) {
+                return new IP6DstNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
+            }
+            IP6Address ip6address, ip6mask;
+            if ((IP6AddressArg().parse(words_following_net[0], ip6address)) && (IP6AddressArg().parse(words_following_net[2], ip6mask))) {
+                return new IP6DstNetPrimitiveToken(ip6address, ip6mask, just_seen_a_not_keyword, an_operator);            
+            } else {
+                return NULL;            // It is not in CIDR style so it must be followed by 3 arguments from which the first and the third one must be both IPv6 or IPv4 addresses
+            }
+        }
     }
 };
 

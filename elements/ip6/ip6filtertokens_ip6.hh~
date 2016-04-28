@@ -735,6 +735,9 @@ public:
     }
     virtual bool check_whether_packet_matches(Packet *packet) {
         click_ip6 *network_header_of_this_packet = (click_ip6*) packet->network_header();
+        click_chatter("IP6Address(network_header_of_this_packet->ip6_dst).unparse().c_str() = %s", IP6Address(network_header_of_this_packet->ip6_dst).unparse().c_str());
+        click_chatter("address = %s", address.unparse().c_str());        
+        click_chatter("mask = %s", mask.unparse().c_str());             
         return take_inverse_on_not((network_header_of_this_packet->ip6_dst & mask) == (address & mask));
     }
 private:
