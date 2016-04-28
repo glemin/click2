@@ -534,7 +534,7 @@ public:
             }
             IPAddress ip4address, ip4mask;
             if ((IPAddressArg().parse(words_following_net[0], ip4address)) && (IPAddressArg().parse(words_following_net[2], ip4mask))) {
-                return new IP6DstNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
+                return new IPDstNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
             }
             IP6Address ip6address, ip6mask;
             if ((IP6AddressArg().parse(words_following_net[0], ip6address)) && (IP6AddressArg().parse(words_following_net[2], ip6mask))) {
