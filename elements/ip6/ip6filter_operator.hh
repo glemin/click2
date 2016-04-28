@@ -1,0 +1,19 @@
+#ifndef CLICK_IPFILTER_OPERATOR_HH
+#define CLICK_IPFILTER_OPERATOR_HH
+
+CLICK_DECLS
+
+namespace ip6filtering {
+enum Operator {
+    EQUALITY,
+    INEQUALITY,
+    GREATER_THAN,
+    GREATER_OR_EQUAL_THAN,
+    LESS_THAN,
+    LESS_OR_EQUAL_THAN,
+};
+
+};
+CLICK_ENDDECLS
+
+#endif  /* CLICK_IPFILTER_OPERATOR_HH */

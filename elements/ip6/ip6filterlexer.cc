@@ -1,0 +1,498 @@
+/*
+ * ip6filter-lexer.{cc,hh} -- Lexer for IP-packet filter with tcpdumplike syntax
+ * Glenn Minne
+ *
+ * Copyright (c) 2000-2007 Mazu Networks, Inc.
+ * Copyright (c) 2010 Meraki, Inc.
+ * Copyright (c) 2004-2011 Regents of the University of California
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, subject to the conditions
+ * listed in the Click LICENSE file. These conditions include: you must
+ * preserve this copyright notice, and you cannot mention the copyright
+ * holders in advertising related to the Software without their permission.
+ * The Software is provided WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED. This
+ * notice is a summary of the Click LICENSE file; the license in that file is
+ * legally binding.
+ */
+
+#include <click/config.h>
+#include "ip6filterlexer.hh"
+CLICK_DECLS
+
+namespace ip6filtering {
+
+/*
+ * @brief This function constructs a Lexer object, and initializes it with a to be lexed string.
+ * @param to_be_lexed_string This is the string that needs to be lexed and split up in tokens.
+ */
+Lexer::Lexer(String to_be_lexed_string) {
+    this->to_be_lexed_string = to_be_lexed_string;
+}
+
+/*
+ * @brief This function is the objects destructor. It does nothing.
+ * Since the class does not contain pointers, nothing needs to be freed.
+ */
+Lexer::~Lexer() { }
+
+/*
+ * @brief Skips all te blanks it sees from start position i and will returns the first non-blank position i or -1 if it goes out of line
+ * @param to_be_lexed_string The string that needs to be lexed and contains the filter expression
+ * @i the start position from which we need to start skipping blanks
+ * @return the first position of a value that is not a blank, or -1 if we had blanks until the end of the file
+ */
+int
+skip_blanks(String to_be_lexed_string, int i) {
+    while(isspace(to_be_lexed_string[i])) {
+        i++;
+        if (i >= to_be_lexed_string.length()) {     // i is out of range, a new isspace(string[i]) call would crash
+            return -1;
+        }
+    }
+    return i;
+}
+
+/*
+ * @brief Reads the next word of the to_be_lexed_string, starting to find the word from position i.
+ * A word is either a parenthesis, or a combination of characters (not containig a parenthesis or a blank).
+ * If it is a combination of characters, these are separated from each other in the filter expression with  a blank or a parenthesis.
+ * 
+ * Examples of words are: (, ), hello, bla, komma
+ * Examples of what are not words: dog(                     // must be two words namely: dog, (
+ *                                 dogs and cats            // must be three words namely: dogs, and, cats
+ * @param to_be_lexed_string The string that needs to be lexed and contains the filter expression
+ * @i the position from which we need to be reading a word, which is either a parenthesis or a combination of characters ended by a blank, a parenthesis or the end of the filter expression.
+ * @return the first position of a value that is not part of the word anymore, either a blank, a parenthesis, or -1 if we are at the end of the filter expression */
+int
+read_word(String to_be_lexed_string, int i, String& read_word) {
+    // check whether the word is a parenthesis
+    if(to_be_lexed_string[i] == '(') {
+        read_word = "(";
+        if (i+1 < to_be_lexed_string.length()) {
+            return i+1;
+        } else {
+            return -1;  // indicating this was the last word
+        }
+    }
+    if(to_be_lexed_string[i] == ')') {
+        read_word = ")";
+        if (i+1 < to_be_lexed_string.length()) {
+            return i+1;
+        } else {
+            return -1; // indicating this was the last word
+        }
+    }
+    // the word is a combination of characters
+    int start_i = i;    // we save the start position for further use
+    while(!(isspace(to_be_lexed_string[i]) || (to_be_lexed_string[i] == '(') || (to_be_lexed_string[i] == ')'))) {      // keep reading until we found a blank, a ( or a )
+        i++;
+        if (i >= to_be_lexed_string.length()) {
+            read_word = to_be_lexed_string.substring(start_i, i - start_i);
+            return -1;      // indicating this was the last word
+        }
+    }
+    read_word = to_be_lexed_string.substring(start_i, i - start_i);
+    return i;
+}
+
+// Skip blanks and read the next word of the "configuration string that was given when initializing this element".
+// i must be set to the current character location we are scanning at the moment in the "cinfiguration string that was given when initializing this element".
+// The result; if a string could be written; will be put inside the read_word variable parameter
+// If a string could be read, it returns 0, when something goes wrong it returns -1.
+// Throws an exception when we reached the end of the line and could not read a new word
+void skip_blanks_and_read_word(String to_be_lexed_string, int& i, String& word_to_be_read, const String error) {
+    i = skip_blanks(to_be_lexed_string, i);
+    if (i == -1) {  // an error was found
+        throw error;
+    }
+    
+    i = read_word(to_be_lexed_string, i, word_to_be_read);
+}
+
+/*
+ * @brief Checks whether the given word is an operator and if it is an operator, it will store the operator in the an_operator parameter. Returns >= 0 on succss and -1 on failure.
+ * @param word the word for which we need to check whether it is an operator
+ * @param an_operator the operator will be stored in this value if the string contained an operator
+ * @return 0 on success, -1 on failure
+ */ 
+int
+is_word_an_operator(String word, Operator& an_operator) {
+    if (word == ">=") {
+        an_operator = GREATER_OR_EQUAL_THAN; return 0;
+    } else if (word == ">") {
+        an_operator = GREATER_THAN; return 0;
+    } else if (word == "<" ) {
+        an_operator = LESS_THAN; return 0;
+    } else if (word == "<=") {
+        an_operator = LESS_OR_EQUAL_THAN; return 0;
+    } else if (word == "!=") {
+        an_operator = INEQUALITY; return 0;
+    } else if (word == "==") {
+        an_operator = EQUALITY; return 0;
+    } else {
+        return -1;
+    }
+}
+
+// Tells which operator was seen, if one was found in the first place
+/*Operator which_operator_was_seen(String current_word, int& i) {
+    int old_i = i;
+    i = read_word(to_be_lexed_string, i, current_word);
+    Operator an_operator;
+    if (is_word_an_operator(current_word,an_operator)) {
+        return an_operator;
+    } else {
+        i = old_i;          // Go back to the previous word
+        return EQUALITY;
+    }   
+}*/
+
+// pop, push, 
+
+/*
+ * @brief This function splits up the string with which the Lexer was initialized up into tokens.
+ * These tokens are the standard units the tcpdumplikesyntax is build up from. Basically we could
+ * say these are the separate words, which are separated with blanks and tabs.
+ * This function can never fail.
+ * Example tokens are "dst host 2001:db8:a0b:12f0::1", "src port 589" and "host 10.0.1.2"
+ * @return A list of tokens.
+ */
+int
+Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_string must become a FilterString which extends String and has a matches method
+    String current_word = "";
+    Operator an_operator;   // this contains an operator if there was an operator between the keyword and the data.  (e.g. as in host == 12.15.6.2; host >= 10.5.9.4).
+                            // if no operator was given equality is assumed (e.g. host == 12.15.6.2 is the same as host 12.15.6.2)
+    int i = 0;
+    bool just_seen_a_not_keyword = false;  // we use this variable to keep track of a possible not keyword seen (e.g. as in not host 12.5.91.1).
+    while (true) {
+        try {        
+            i = skip_blanks(to_be_lexed_string, i); // skip the potential blanks at the start and go to the first non blank position
+            if (i == -1) {      // end of line was seen after a series of blanks
+                return 0;       // At the end of an expression it is allowed to have it followed by nothing anymore (or only by blanks)
+                                // We return 0 because we have successfully read the last expression
+            }
+            i = read_word(to_be_lexed_string, i, current_word); // read out the next word, then process the word
+       //     click_chatter("word = %s ", current_word.c_str());
+            
+            if(current_word == "not") {
+                if (!just_seen_a_not_keyword == true) {
+                    if (skip_blanks(to_be_lexed_string, i) >= 0) {
+                        just_seen_a_not_keyword = true;
+                    } else {
+                        errh->error("not should not be the last word in a filter expression"); return -1;
+                    }
+                } else {
+                    errh->error("we have seen 'not' two times in a row, that is not allowed"); return -1;
+                }
+            } else if(current_word == "and") {
+                if (!just_seen_a_not_keyword) {
+                    tokens.push_back(new AndCombinerToken());
+                } else {
+                    errh->error("and token should not be preceded by a not"); return -1;
+                }
+            } else if (current_word == "or") {
+                if (!just_seen_a_not_keyword) {
+                    tokens.push_back(new OrCombinerToken());
+                } else {
+                    errh->error("or token should not be preceded by a not"); return -1;
+                }
+            } else if (current_word == "(") {
+                tokens.push_back(new LeftParenthesisToken(just_seen_a_not_keyword));
+                just_seen_a_not_keyword = false;
+            } else if (current_word == ")") {
+                if (!just_seen_a_not_keyword) {
+                    tokens.push_back(new RightParenthesisToken());
+                } else {
+                    errh->error(") token should not be preceded by a not"); return -1;
+                }
+            } else if (current_word == "src") {
+                click_chatter("#1: i = %i", i);
+                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no second keyword followed after src; src should be followed by host or port");
+                click_chatter("#2: i = %i", i);                
+                if (current_word == "host") {
+                    skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "src host was not followed by an argument");
+                    Token *token;
+                    if (is_word_an_operator(current_word, an_operator) >= 0) {
+                        skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "operator was only followed by blanks, is should be followed by data");
+                        token = SrcHostFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                    } else {    // no operator was given, equality is assumed and the current word already contains the data
+                        token = SrcHostFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                    }
+                    if (token != NULL) {    // if the parsing succeeded push the token at the back of the token vector
+                        tokens.push_back(token);
+                        just_seen_a_not_keyword = false;
+                    } else {
+                        errh->error("src host was followed by an unparsable argument '%s'; it should be followed by an IPv4, IPv6 or Ethernet address", current_word.c_str()); return -1;
+                    }
+                } else if (current_word == "port") {
+                    click_chatter("#3: i = %i", i);
+                    skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "src port was not followed by an argument");
+                    click_chatter("#4: i = %i", i);
+                    Token *token;
+                    if (is_word_an_operator(current_word, an_operator) >= 0) {
+                        skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "operator was only followed by blanks, it should be followed by data");
+                        token = SrcPortFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                    } else {    // no operator was given, equality is assumed and the current word already contains the data
+                        token = SrcPortFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                    }
+                    if (token != NULL) {    // if the parsing succeeded push the token at the back of the token vector
+                        tokens.push_back(token);
+                        just_seen_a_not_keyword = false;
+                    } else {
+                        errh->error("src port was followed by an unparsable argument '%s'; it should be an integer between 0 and 65535", current_word.c_str()); return -1;
+                    }
+                } else if (current_word == "net") {
+                    bool was_the_argument_written_in_CIDR_style;    // This bool will get a value being passed to the SrcNetFactory
+                    Vector<String> words_following_net;     // A Vector keeping track of words following 'net'. Used to construct the correct token by the Token factory.
+                    skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no keyword or agument followed the net keyword");
+                    
+                    words_following_net.push_back(current_word);
+                    int old_i = i;          // When we did not use CIDR notation we need to go back to this 'i'
+                    i = skip_blanks(to_be_lexed_string, i);
+                    
+                    if (i != -1) {
+                        i = read_word(to_be_lexed_string, i, current_word);
+                        words_following_net.push_back(current_word);
+                        i = skip_blanks(to_be_lexed_string, i);
+                        if (i != -1) {
+                            i = read_word(to_be_lexed_string, i, current_word);
+                            click_chatter("onze i = %i", i);
+                            click_chatter("we hebben current_word = ", current_word.c_str());
+                            words_following_net.push_back(current_word);
+                            click_chatter("let us enter");
+                            Token *token = SrcNetFactory::create_token(words_following_net, just_seen_a_not_keyword, an_operator, was_the_argument_written_in_CIDR_style);
+                            if (token != NULL) {
+                                click_chatter("it is not null");
+                                tokens.push_back(token);
+                                just_seen_a_not_keyword = false;
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    // the next to be read is really the next word to be read is further back, go back to the old i
+                                    i = old_i;
+                                }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
+                            } else {
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    errh->error("net was followed by an unparsable argument"); return -1;
+                                } else {
+                                    errh->error("net mask was followed by an unparsable argument"); return -1;
+                                }
+                            }
+                        } else {
+                            Token *token = SrcNetFactory::create_token(words_following_net, just_seen_a_not_keyword, an_operator, was_the_argument_written_in_CIDR_style);
+                            if (token != NULL) {
+                                tokens.push_back(token);
+                                just_seen_a_not_keyword = false;
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    // the next to be read is really the next word to be read is further back, go back to the old i
+                                    i = old_i;
+                                }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
+                            } else {
+                                if (was_the_argument_written_in_CIDR_style) {
+                                    errh->error("net was followed by an unparsable argument"); return -1;
+                                } else {
+                                    errh->error("net mask was followed by an unparsable argument"); return -1;
+                                }
+                            }
+                        }
+                    } else {
+                        Token *token = SrcNetFactory::create_token(words_following_net, just_seen_a_not_keyword, an_operator, was_the_argument_written_in_CIDR_style);
+                        if (token != NULL) {
+                            tokens.push_back(token);
+                            just_seen_a_not_keyword = false;
+                            if (was_the_argument_written_in_CIDR_style) {
+                                // the next to be read is really the next word to be read is further back, go back to the old i
+                                i = old_i;
+                            }   // when not in CIDR style we do not need to go back so we need to do nothing in that case
+                        } else {
+                            if (was_the_argument_written_in_CIDR_style) {
+                                errh->error("net was followed by an unparsable argument"); return -1;
+                            } else {
+                                errh->error("net mask was followed by an unparsable argument"); return -1;
+                            }
+                        }
+                    }
+                    } else {
+                        errh->error("unkown keyword '%s' followed after src, the keyword should be host or port", current_word.c_str()); return -1;
+                    }
+            } else if (current_word == "dst") {
+                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no second keyword followed after dst; dst should be followed by host or port");
+                if (current_word == "host") {
+                    i = skip_blanks(to_be_lexed_string, i);
+                    if (i != -1) {
+                        i = read_word(to_be_lexed_string, i, current_word);
+                        
+                        Token *token;
+                        if (is_word_an_operator(current_word, an_operator) >= 0) {
+                            i = skip_blanks(to_be_lexed_string, i);
+                            if (i != -1) {
+                                i = read_word(to_be_lexed_string, i, current_word);
+                                token = SrcHostFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                            } else {
+                                errh->error("operator was only followed by blanks, that is not allowed, an operator must be followed by data"); return -1;
+                            }
+                        } else {    // no operator was given, equality is assumed and the current word already contains the data
+                            token = SrcHostFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                        }
+                        
+                        if (token != NULL) {    // if the parsing succeeded push the token at the back of the token vector
+                            tokens.push_back(token);
+                            just_seen_a_not_keyword = false;
+                        } else {
+                            errh->error("dst host was followed by an unparsable argument '%s'; it should be followed by an IPv4, IPv6 or Ethernet address", current_word.c_str()); return -1;
+                        }
+                    } else {
+                        errh->error("dst host was not followed by an argument"); return -1;
+                    }
+                } else if (current_word == "port") {
+                    skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "dst port was not followed by an argument");
+                        
+                    Token *token;
+                    if (is_word_an_operator(current_word, an_operator) >= 0) {
+                        skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "operator was only followed by blanks, an operator must be followed by data");
+                        token = DstPortFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                    } else {    // no operator was given, equality is assumed and the current word already contains the data
+                        token = DstPortFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                    }
+                    if (token != NULL) {    // if the parsing succeeded push the token at the back of the token vector
+                        tokens.push_back(token);
+                        just_seen_a_not_keyword = false;
+                    } else {
+                        errh->error("dst port was followed by an unparsable argument '%s'; it should be an integer between 0 and 65535", current_word.c_str()); return -1;
+                    }
+                } else if (current_word == "net") {
+
+                } else {
+                    errh->error("unkown keyword '%s' followed after dst, the keyword should be host, port or net", current_word.c_str()); return -1;
+                }
+            } else if (current_word == "host") {
+                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "host keyword was not followed by an argument");
+              //      click_chatter("current word = %s", current_word.c_str());
+                    
+                Token *token;
+                if (is_word_an_operator(current_word, an_operator) >= 0) {
+                    i = read_word(to_be_lexed_string, i, current_word);
+                    token = HostFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                } else {    // no operator was given, equality is assumed and the current word already contains the data
+                    token = HostFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                }
+                if (token != NULL) {    // if the parsing succeeded push the token at the back of the token vector
+         //           click_chatter("we pushen een token back");
+                    tokens.push_back(token);
+                    just_seen_a_not_keyword = false;
+                } else {
+                    errh->error("host was followed by an unparsable argument '%s'; it should be followed by an IPv4, IPv6 or Ethernet address", current_word.c_str()); return -1;
+                }
+            } else if (current_word == "port") {
+                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "port was not followed by an argument");
+                    
+                Token *token;
+                if (is_word_an_operator(current_word, an_operator) >= 0) {
+                    skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "operator was only followed by blanks, an operator must be followed by data");
+                    i = read_word(to_be_lexed_string, i, current_word);
+                    token = PortFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                } else {    // no operator was given, equality is assumed and the current word already contains the data
+                    token = PortFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                }
+                if (token != NULL) {    // if the parsing succeeded push the token at the back of the token vector
+                    tokens.push_back(token);
+                    just_seen_a_not_keyword = false;
+                } else {
+                    errh->error("port was followed by an unparsable argument '%s'; it should be an integer between 0 and 65535", current_word.c_str()); return -1;
+                }
+            } else if (current_word == "net") {
+            
+            } else if (current_word == "icmp") {
+                i = skip_blanks(to_be_lexed_string, i);
+                if (i != -1) {  // if after skipping blanks we are not at the end of the filter line
+                    i = read_word(to_be_lexed_string, i, current_word);
+                    if (current_word == "type") {
+                    
+                    }  
+                } else {
+                    errh->error("no second keyword after icmp; it should be followed by type");
+                }
+            } else if (current_word == "ip6") {
+                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no second keyword after ip6; ip6 should be followed by vers, plen, flow, nxt, dscp, ect, ce, hlim, frag, unfrag.");
+                i = skip_blanks(to_be_lexed_string, i);
+                Token *token;
+                if (i != -1) {  // if after skipping blanks we are not at the end of the filter line
+                    i = read_word(to_be_lexed_string, i, current_word);
+                    if (current_word == "vers") {           // version
+                        token = IP6VersionFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                    } else if (current_word == "plen") {    // payload length
+                        token = IP6PayloadLengthFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                    } else if (current_word == "flow") {    // flow label
+                        token = IP6FlowlabelFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                
+                    } else if (current_word == "nxt") {     // next header
+                        token = IP6NextHeaderFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                
+                    } else if (current_word == "dscp") {
+                        token = IP6DSCPFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                
+                    } else if (current_word == "ect") {
+                    
+                    } else if (current_word == "ce") {
+                    
+                    } else if (current_word == "hlim") {    // hop limit
+                        token = IP6HLimFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                               
+                    } else if (current_word == "frag") {
+                    
+                    } else if (current_word == "unfrag") {
+                    
+                    } else {
+                        errh->error("unkown keyword '%s' followed ip, it should be followed by vers, plen, flow, nxt, dscp, ect, ce, hlim, frag or unfrag."); return -1;
+                    }
+                } else {
+                    errh->error("no second keyword after ip; ip should be followed by vers, plen, flow, nxt, dscp, ect, ce, hlim, frag, unfrag."); return -1;
+                }        
+            } else if (current_word == "ip") {
+                i = skip_blanks(to_be_lexed_string, i);
+                Token *token;
+                if (i != -1) {  // if after skipping blanks we are not at the end of the filter line
+                    i = read_word(to_be_lexed_string, i, current_word);
+                    if (current_word == "vers") {
+                        token = IPVersionFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                
+                    } else if (current_word == "hl") {
+                         token = IPHeaderLengthFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                               
+                    } else if (current_word == "id") {
+                         token = IPIDFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                               
+                    } else if (current_word == "tos") {
+                         token = IPTOSFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                                               
+                    } else if (current_word == "dscp") {
+                         token = IPDSCPFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY); 
+                    } else if (current_word == "ecn") {
+                        token = IPECNFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                                                           
+                    } else if (current_word == "ect") {
+                    
+                    } else if (current_word == "ce") {
+                    
+                    } else if (current_word == "ttl") {
+                        token = IPTTLFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                    } else if (current_word == "frag") {
+                    
+                    } else if (current_word == "unfrag") {
+                    
+                    } else {
+                        errh->error("unkown keyword '%s' followed ip, it should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag or unfrag."); return -1;
+                    }
+                } else {
+                    errh->error("no second keyword after ip; ip should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag, unfrag."); return -1;
+                }
+            } else {
+                errh->error("unkown keyword '%s' found, see the click manual page for the list of acceptabl keywords", current_word.c_str());
+                return -1;        
+            }
+
+            if (i == -1) {  // end of line was seen after a word
+                return 0;
+            }
+        } catch (String exception) {   // exception contains the error code
+            errh->error(exception.c_str());
+            return -1;
+        }
+    }
+}
+
+}; // namespace ipfiltering
+
+CLICK_ENDDECLS
+ELEMENT_PROVIDES(FilterL)
