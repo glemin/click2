@@ -487,7 +487,7 @@ public:
         uint8_t* ip6_DSCP_of_this_packet_part_1 = (uint8_t*) packet->network_header();
         uint8_t ip6_DSCP_of_packet_part_1 = (*ip6_DSCP_of_this_packet_part_1 & 0b00001111) << 2; // already shifted in the right position so the parts can be merged with |
         uint8_t* ip6_DSCP_of_this_packet_part_2 = (uint8_t*) packet->network_header() + 1;
-        uint8_t ip6_DSCP_of_packet_part_2 = (*ip6_DSCP_of_this_packet_part_2 & 0b11000000);      // the second part is already in the correct position so does not need a shift
+        uint8_t ip6_DSCP_of_packet_part_2 = (*ip6_DSCP_of_this_packet_part_2 & 0b11000000) >> 6; // the second part is also shifted in the right position now
         
         switch (an_operator)
         {

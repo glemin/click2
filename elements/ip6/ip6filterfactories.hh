@@ -232,13 +232,13 @@ public:
         
         IntArg* int_arg = new IntArg();
         if (int_arg->template parse<uint8_t>(argument_of_ip6_dscp_keyword, result)) {
-            if (result > 63) {  /// This is a 6 bit field, the number must be at least 0 and maximally 63
-                return NULL;
+            if (result > 63) {  // This is a 6 bit field, the number must be at least 0 and maximally 63
+                throw String("ip6 dscp was followed by the integer '") + argument_of_ip6_dscp_keyword + String("', but the integer was not between 0 and 63");        
             }
             return new IP6DSCPPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'ip6 dscp' is not a valid integer.   
+        throw String("ip6 dscp was followed by the unparsable argument '") + argument_of_ip6_dscp_keyword + String("', it must be followed by an integer between 0 and 63");        
     }
 };
 
