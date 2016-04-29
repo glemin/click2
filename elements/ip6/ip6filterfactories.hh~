@@ -220,7 +220,7 @@ public:
             return new IP6NextHeaderPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'ip6 nxt' is not a valid integer.    
+        throw String("ip6 nxt was followed by the unparsable argument '") + argument_of_ip6_next_keyword + String("', it must be followed by an integer between 0 and 255");        
     }
 
 };
