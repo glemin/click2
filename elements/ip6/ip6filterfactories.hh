@@ -269,7 +269,7 @@ public:
             return new IP6HLimPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'ip6 hlim' is not a valid integer.       
+        throw String("ip6 dscp was followed by the unparsable argument '") + argument_of_ip6_hlim_keyword + String("', it must be followed by an integer between 0 and 255");
     }
 };
 

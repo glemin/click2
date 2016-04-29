@@ -35,9 +35,9 @@ SetIP6DSCP::configure(Vector<String> &conf, ErrorHandler *errh)
 {
     unsigned dscp_val;
     if (Args(conf, this, errh).read_mp("DSCP", dscp_val).complete() < 0)
-	    return -1;
+	return -1;
     if (dscp_val > 0x3F)
-	    return errh->error("diffserv code point out of range");
+	return errh->error("diffserv code point out of range");
 
     // OK: set values
     _dscp = htonl(dscp_val << IP6_DSCP_SHIFT);
@@ -58,17 +58,17 @@ SetIP6DSCP::smaction(Packet *p_in)
 void
 SetIP6DSCP::push(int, Packet *p)
 {
-    if ((p = smaction(p)) != 0)
-        output(0).push(p);
+  if ((p = smaction(p)) != 0)
+    output(0).push(p);
 }
 
 Packet *
 SetIP6DSCP::pull(int)
 {
-    Packet *p = input(0).pull();
-    if (p)
-        p = smaction(p);
-    return p;
+  Packet *p = input(0).pull();
+  if (p)
+    p = smaction(p);
+  return p;
 }
 
 void

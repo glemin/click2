@@ -1,6 +1,6 @@
 /*
- * setip6dscp.{cc,hh} -- element sets IP6 header DSCP field
- * Frederik Scholaert
+ * setip6hlim.{cc,hh} -- element sets IP6 hop limit field
+ * Glenn Minne
  *
  * Copyright (c) 2002 Massachusetts Institute of Technology
  *
@@ -16,54 +16,53 @@
  */
 
 #include <click/config.h>
-#include "setip6dscp.hh"
+#include "setip6hlim.hh"
 #include <clicknet/ip6.h>
 #include <click/args.hh>
 #include <click/error.hh>
 CLICK_DECLS
 
-SetIP6DSCP::SetIP6DSCP()
+SetIP6Hlim::SetIP6Hlim()
 {
 }
 
-SetIP6DSCP::~SetIP6DSCP()
+SetIP6Hlim::~SetIP6Hlim()
 {
 }
 
 int
-SetIP6DSCP::configure(Vector<String> &conf, ErrorHandler *errh)
+SetIP6Hlim::configure(Vector<String> &conf, ErrorHandler *errh)
 {
-    unsigned dscp_val;
-    if (Args(conf, this, errh).read_mp("DSCP", dscp_val).complete() < 0)
+    if (Args(conf, this, errh).read_mp("FLOW", _flow_label).complete() < 0)
 	    return -1;
-    if (dscp_val > 0x3F)
-	    return errh->error("diffserv code point out of range");
+    if (_flow_label > 1048575)
+	    return errh->error("flow label out of range");
 
-    // OK: set values
-    _dscp = htonl(dscp_val << IP6_DSCP_SHIFT);
     return 0;
 }
 
 
 inline Packet *
-SetIP6DSCP::smaction(Packet *p_in)
+SetIP6Hlim::smaction(Packet *p_in)
 {
     WritablePacket *p = p_in->uniqueify();
     assert(p->has_network_header());
     click_ip6 *ip6 = p->ip6_header();
-    ip6->ip6_flow = (ip6->ip6_flow & htonl(~IP6_DSCP_MASK)) | _dscp;
+    
+    ip6->ip6_ctlun.ip6_un1.ip6_un1_hlim = _hlim;
+
     return p;
 }
 
 void
-SetIP6DSCP::push(int, Packet *p)
+SetIP6Hlim::push(int, Packet *p)
 {
     if ((p = smaction(p)) != 0)
         output(0).push(p);
 }
 
 Packet *
-SetIP6DSCP::pull(int)
+SetIP6Hlim::pull(int)
 {
     Packet *p = input(0).pull();
     if (p)
@@ -72,12 +71,12 @@ SetIP6DSCP::pull(int)
 }
 
 void
-SetIP6DSCP::add_handlers()
+SetIP6Hlim::add_handlers()
 {
-    add_read_handler("dscp", read_keyword_handler, "0 DSCP", Handler::CALM);
-    add_write_handler("dscp", reconfigure_keyword_handler, "0 DSCP");
+    add_read_handler("hopLimit", read_keyword_handler, "0 SetIP6Hlim", Handler::CALM);
+    add_write_handler("hopLimit", reconfigure_keyword_handler, "0 SetIP6Hlim");
 }
 
 CLICK_ENDDECLS
-EXPORT_ELEMENT(SetIP6DSCP)
-ELEMENT_MT_SAFE(SetIP6DSCP)
+EXPORT_ELEMENT(SetIP6Hlim)
+ELEMENT_MT_SAFE(SetIP6Hlim)
