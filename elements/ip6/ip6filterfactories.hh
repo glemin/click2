@@ -169,30 +169,26 @@ public:
         
         IntArg* int_arg = new IntArg();
         if (int_arg->template parse<uint8_t>(argument_of_ip6_version_keyword, result)) {
-            if (result >= 16) { // This is a 4 bit field, the number must be at least 0 and maximally 15
-                return NULL;
+            if (result > 15) { // This is a 4 bit field, the number must be at least 0 and maximally 15
+                throw String("ip6 vers was followed by an integer, '") + argument_of_ip6_version_keyword + String("', but the integer was not between 0 and 15");
             }
             return new IP6VersionPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
-        
-        return NULL;    // An error occured, the argument following 'ip6 vers' is not a valid integer.         
+        throw String("ip6 vers was followed by the unparsable argument '") + argument_of_ip6_version_keyword + String("', it must be followed by an integer between 0 and 15");
     }
 };
 
 class IP6PayloadLengthFactory {
 public:
     static Token* create_token(String argument_of_ip6_payload_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        uint8_t result;
+        uint16_t result;
         
         IntArg* int_arg = new IntArg();
-        if (int_arg->template parse<uint8_t>(argument_of_ip6_payload_keyword, result)) {
-            if (result > 15) { // This is a 4 bit field, the number must be at least 0 and maximally 15
-                return NULL;
-            }
+        if (int_arg->template parse<uint16_t>(argument_of_ip6_payload_keyword, result)) {
             return new IP6PayloadLengthPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
-        
-        return NULL;    // An error occured, the argument following 'ip6 plen' is not a valid integer.        
+
+        throw String("ip6 plen was followed by the unparsable argument '") + argument_of_ip6_payload_keyword + String("', it must be followed by an integer between 0 and 65535");        
     }
 };
 
@@ -398,11 +394,6 @@ public:
      * @return An IPNetPrimitiveToken, an IP6NetPrimitiveToken, or NULL (in case something went wrong).
      */
     static Token* create_token(Vector<String> words_following_net, bool just_seen_a_not_keyword, Operator an_operator, bool& was_written_in_CIDR_style) {
-        (void) words_following_net;
-        (void) just_seen_a_not_keyword;
-        (void) an_operator;
-        (void) was_written_in_CIDR_style;
-        
         // Determine whether it is CIDR style
         int slash_location;     // if there is a slash its location will be hold in this variable
         if ((slash_location = words_following_net[0].find_left('/')) != -1) {        // It is CIDR style
@@ -468,11 +459,6 @@ public:
      * @return An IPSrcNetPrimitiveToken, an IP6SrcNetPrimitiveToken, or NULL (in case something went wrong).
      */
     static Token* create_token(Vector<String> words_following_net, bool just_seen_a_not_keyword, Operator an_operator, bool& was_written_in_CIDR_style) {
-        (void) words_following_net;
-        (void) just_seen_a_not_keyword;
-        (void) an_operator;
-        (void) was_written_in_CIDR_style;
-        
         // Determine whether it is CIDR style
         int slash_location;     // if there is a slash its location will be hold in this variable
         if ((slash_location = words_following_net[0].find_left('/')) != -1) {        // It is CIDR style
@@ -538,11 +524,6 @@ public:
      * @return An IPDstNetPrimitiveToken, an IP6DstNetPrimitiveToken, or NULL (in case something went wrong).
      */
     static Token* create_token(Vector<String> words_following_net, bool just_seen_a_not_keyword, Operator an_operator, bool& was_written_in_CIDR_style) {
-        (void) words_following_net;
-        (void) just_seen_a_not_keyword;
-        (void) an_operator;
-        (void) was_written_in_CIDR_style;
-        
         // Determine whether it is CIDR style
         int slash_location;     // if there is a slash its location will be hold in this variable
         if ((slash_location = words_following_net[0].find_left('/')) != -1) {        // It is CIDR style

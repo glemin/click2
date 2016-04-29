@@ -558,7 +558,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                         token = IP6VersionFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
                     } else {    // no operator was given, equality is assumed and the current word already contains the data
                         token = IP6VersionFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
-                    }           
+                    }
                 } else if (current_word == "plen") {    // payload length
                     skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after ip6 keyword");
                     if (is_word_an_operator(current_word, an_operator) >= 0) {
@@ -602,7 +602,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                         token = IP6HLimFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
                     } else {    // no operator was given, equality is assumed and the current word already contains the data
                         token = IP6HLimFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
-                    }                
+                    }
                 } else if (current_word == "frag") {
                 
                 } else if (current_word == "unfrag") {
@@ -610,7 +610,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                 } else {
                     errh->error("unkown keyword '%s' followed ip, it should be followed by vers, plen, flow, nxt, dscp, ect, ce, hlim, frag or unfrag."); return -1;
                 }
-                      
+                tokens.push_back(token);
             } else if (current_word == "ip") {
                 i = skip_blanks(to_be_lexed_string, i);
                 Token *token;

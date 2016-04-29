@@ -364,7 +364,7 @@ public:
         PrimitiveToken::print();
     }
     virtual bool check_whether_packet_matches(Packet *packet) {
-        uint16_t* ip6_payload_length_of_this_packet = (uint16_t*) packet->network_header() + 4;
+        uint16_t* ip6_payload_length_of_this_packet = (uint16_t*) packet->network_header() + 2;
         
         switch (an_operator)
         {
