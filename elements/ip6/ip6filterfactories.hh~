@@ -187,7 +187,7 @@ public:
         if (int_arg->template parse<uint16_t>(argument_of_ip6_payload_keyword, result)) {
             return new IP6PayloadLengthPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
-        
+
         throw String("ip6 plen was followed by the unparsable argument '") + argument_of_ip6_payload_keyword + String("', it must be followed by an integer between 0 and 65535");        
     }
 };
@@ -200,12 +200,13 @@ public:
         IntArg* int_arg = new IntArg();
         if (int_arg->template parse<uint32_t>(argument_of_ip6_flowlabel_keyword, result)) {
             if (result > 1048575) { // This is a 20 bit field, the number must be at least 0 and maximally 1048575
+                throw String("ip6 flow was followed by an integer, '") + argument_of_ip6_flowlabel_keyword + String("', but the integer was not between 0 and 1048575");
                 return NULL;
             }
             return new IP6FlowlabelPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'ip6 flow' is not a valid integer.      
+        throw String("ip6 plen was followed by the unparsable argument '") + argument_of_ip6_flowlabel_keyword + String("', it must be followed by an integer between 0 and 1048575s");        
     }
 };
 

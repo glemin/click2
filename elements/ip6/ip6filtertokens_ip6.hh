@@ -407,7 +407,7 @@ public:
         uint32_t ip6_flow_label_packet_part1 = (*ip6_flow_label_of_this_packet & 0b00001111) << 16;
         uint32_t ip6_flow_label_packet_part2 = (*(ip6_flow_label_of_this_packet + 1) << 8);
         uint32_t ip6_flow_label_packet_part3 = *(ip6_flow_label_of_this_packet + 2);
-        uint32_t ip6_flow_label_packet = ip6_flow_label_packet_part1 | ip6_flow_label_packet_part2 | ip6_flow_label_packet_part3;
+        uint32_t ip6_flow_label_packet = htonl(ip6_flow_label_packet_part1 | ip6_flow_label_packet_part2 | ip6_flow_label_packet_part3);        
         
         switch (an_operator)
         {
