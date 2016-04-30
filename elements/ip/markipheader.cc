@@ -1,5 +1,5 @@
 /*
- * markipheader.{cc,hh} -- element sets IP Header annotation
+ * markipheader.{cc,hh} -- element sets the network header and transport header pointers
  * Eddie Kohler
  *
  * Copyright (c) 1999-2000 Massachusetts Institute of Technology

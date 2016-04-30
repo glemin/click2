@@ -7,11 +7,14 @@ CLICK_DECLS
  * =c
  * MarkIPHeader([OFFSET])
  * =s ip
- * sets IP header annotation
+ * sets the packet's network header and transport header pointers
  * =d
  *
- * Marks packets as IP packets by setting the IP Header annotation. The IP
- * header starts OFFSET bytes into the packet. Default OFFSET is 0.
+ * Sets the packet's network header pointer by assuming that the packet header
+ * starts at OFFSET bytes into the packet. Default OFFSET is 0.
+ *
+ * Also at the same time sets the transport header pointer by looking to the 
+ * ip Internet Header Length (IHL) field.
  *
  * Does not check length fields for sanity, shorten packets to the IP length,
  * or set the destination IP address annotation. Use CheckIPHeader or
