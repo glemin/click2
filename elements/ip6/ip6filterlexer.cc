@@ -617,6 +617,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     errh->error("unkown keyword '%s' followed ip, it should be followed by vers, plen, flow, nxt, dscp, ecn, ce, hlim, frag or unfrag.", current_word.c_str()); return -1;
                 }
                 tokens.push_back(token);
+                just_seen_a_not_keyword = false;
             } else if (current_word == "ip") {
                 i = skip_blanks(to_be_lexed_string, i);
                 Token *token;

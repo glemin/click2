@@ -485,9 +485,9 @@ public:
     }
     virtual bool check_whether_packet_matches(Packet *packet) {
         uint8_t* ip6_DSCP_of_this_packet_part_1 = (uint8_t*) packet->network_header();
-        uint8_t ip6_DSCP_of_packet_part_1 = (*ip6_DSCP_of_this_packet_part_1 & 0b11110000) << 2; // already shifted in the right position so the parts can be merged with |
+        uint8_t ip6_DSCP_of_packet_part_1 = (*ip6_DSCP_of_this_packet_part_1 & 0b00001111) << 2; // already shifted in the right position so the parts can be merged with |
         uint8_t* ip6_DSCP_of_this_packet_part_2 = (uint8_t*) packet->network_header() + 1;
-        uint8_t ip6_DSCP_of_packet_part_2 = (*ip6_DSCP_of_this_packet_part_2 & 0b00111111);      // the second part is already in the correct position so does not need a shift
+        uint8_t ip6_DSCP_of_packet_part_2 = (*ip6_DSCP_of_this_packet_part_2 & 0b11000000) >> 6; // the second part is also shifted in the right position now
         
         switch (an_operator)
         {
@@ -569,7 +569,7 @@ public:
     virtual bool check_whether_packet_matches(Packet *packet) {
         uint8_t* ip6_CE_of_this_packet = (uint8_t*) packet->network_header() + 1;
         
-        return ((*ip6_CE_of_this_packet & 0b00110000) == 0b00110000);
+        return take_inverse_on_not((*ip6_CE_of_this_packet & 0b00110000) == 0b00110000);
     }
 
 };

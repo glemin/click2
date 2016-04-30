@@ -569,7 +569,7 @@ public:
     virtual bool check_whether_packet_matches(Packet *packet) {
         uint8_t* ip6_CE_of_this_packet = (uint8_t*) packet->network_header() + 1;
         
-        return ((*ip6_CE_of_this_packet & 0b00110000) == 0b00110000);
+        return take_inverse_on_not((*ip6_CE_of_this_packet & 0b00110000) == 0b00110000);
     }
 
 };

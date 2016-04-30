@@ -187,14 +187,12 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     errh->error("we have seen 'not' two times in a row, that is not allowed"); return -1;
                 }
             } else if(current_word == "and") {
-                click_chatter("we add an AndCombinerToken");
                 if (!just_seen_a_not_keyword) {
                     tokens.push_back(new AndCombinerToken());
                 } else {
                     errh->error("and token should not be preceded by a not"); return -1;
                 }
             } else if (current_word == "or") {
-                click_chatter("we add an OrCombinerToken");
                 if (!just_seen_a_not_keyword) {
                     tokens.push_back(new OrCombinerToken());
                 } else {
