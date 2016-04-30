@@ -549,7 +549,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     errh->error("no second keyword after icmp; it should be followed by type");
                 }
             } else if (current_word == "ip6") {
-                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no second keyword after ip6; ip6 should be followed by vers, plen, flow, nxt, dscp, ect, ce, hlim, frag, unfrag.");
+                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no second keyword after ip6; ip6 should be followed by vers, plen, flow, nxt, dscp, ecn, ce, hlim, frag, unfrag.");
                 Token *token;
                 if (current_word == "vers") {           // version
                     skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after ip6 keyword");
@@ -591,8 +591,14 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     } else {    // no operator was given, equality is assumed and the current word already contains the data
                         token = IP6DSCPFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
                     }
-                } else if (current_word == "ect") {
-                
+                } else if (current_word == "ecn") {
+                    skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after ip6 keyword");
+                    if (is_word_an_operator(current_word, an_operator) >= 0) {
+                        skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "operator was only followed by blanks, an operator must be followed by data");
+                        token = IP6ECNFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                    } else {
+                        token = IP6ECNFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                       
+                    }
                 } else if (current_word == "ce") {
                 
                 } else if (current_word == "hlim") {    // hop limit

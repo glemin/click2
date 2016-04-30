@@ -250,12 +250,12 @@ public:
         IntArg* int_arg = new IntArg();
         if (int_arg->template parse<uint8_t>(argument_of_ip6_ecn_keyword, result)) {
             if (result > 3) {  /// This is a 2 bit field, the number must be at least 0 and maximally 3
-                return NULL;
+                throw String("ip6 dscp was followed by the integer '") + argument_of_ip6_ecn_keyword + String("', but the integer was not between 0 and 3");        
             }
             return new IP6ECNPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'ip6 ecn' is not a valid integer.       
+        throw String("ip6 ecn was followed by the unparsable argument '") + argument_of_ip6_dscp_keyword + String("', it must be followed by an integer between 0 and 3");        
     }
 };
 
@@ -269,7 +269,7 @@ public:
             return new IP6HLimPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'ip6 hlim' is not a valid integer.       
+        throw String("ip6 dscp was followed by the unparsable argument '") + argument_of_ip6_hlim_keyword + String("', it must be followed by an integer between 0 and 255");
     }
 };
 
