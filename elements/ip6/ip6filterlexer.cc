@@ -600,7 +600,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                         token = IP6ECNFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                       
                     }
                 } else if (current_word == "ce") {
-                
+                    token = new IP6CEPrimitiveToken(just_seen_a_not_keyword, an_operator);           
                 } else if (current_word == "hlim") {    // hop limit
                     skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after ip6 keyword");
                     if (is_word_an_operator(current_word, an_operator) >= 0) {
@@ -614,7 +614,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                 } else if (current_word == "unfrag") {
                 
                 } else {
-                    errh->error("unkown keyword '%s' followed ip, it should be followed by vers, plen, flow, nxt, dscp, ect, ce, hlim, frag or unfrag."); return -1;
+                    errh->error("unkown keyword '%s' followed ip, it should be followed by vers, plen, flow, nxt, dscp, ecn, ce, hlim, frag or unfrag.", current_word.c_str()); return -1;
                 }
                 tokens.push_back(token);
             } else if (current_word == "ip") {
@@ -645,7 +645,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     } else if (current_word == "unfrag") {
                     
                     } else {
-                        errh->error("unkown keyword '%s' followed ip, it should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag or unfrag."); return -1;
+                        errh->error("unkown keyword '%s' followed ip, it should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag or unfrag.", current_word.c_str()); return -1;
                     }
                 } else {
                     errh->error("no second keyword after ip; ip should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag, unfrag."); return -1;

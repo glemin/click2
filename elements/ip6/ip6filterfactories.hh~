@@ -255,7 +255,7 @@ public:
             return new IP6ECNPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
         
-        throw String("ip6 ecn was followed by the unparsable argument '") + argument_of_ip6_dscp_keyword + String("', it must be followed by an integer between 0 and 3");        
+        throw String("ip6 ecn was followed by the unparsable argument '") + argument_of_ip6_ecn_keyword + String("', it must be followed by an integer between 0 and 3");        
     }
 };
 

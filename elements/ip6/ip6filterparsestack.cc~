@@ -52,7 +52,7 @@ namespace ip6filtering {
     Token* create_negated_node(ASTNode *original_node) {        // This function works recursively. The old node remains unaltered but the new node being created will contain
                                                                 // the previous tree in but than negated.
         // 1. This is the base case, terminating case, or leaf node of the recursive procedure    
-        if (dynamic_cast<PrimitiveToken*>(original_node)) {     
+        if (dynamic_cast<PrimitiveToken*>(original_node)) {
             PrimitiveToken *negated_primitive = ((PrimitiveToken*) original_node)->clone_and_invert_not_keyword_seen();
             return negated_primitive;
         // 2. Here follow the set of rules that reduce to the base case
@@ -163,8 +163,8 @@ namespace ip6filtering {
             return 0;
         }
         
-        return evaluate_common_part(0, stack.size() - 1, false, errh);
-    }
+        return evaluate_common_part(0, stack.size() - 1, false, errh);  // stack.size() - 1 because the last token is the EndOfLineToken, which
+}                                                                       // is not interesting in the evaluation process
     
     /*
      * @brief evaluates what is between two parentheses and reduces the 2 parentheses and everything what was in between to one token
@@ -333,11 +333,13 @@ namespace ip6filtering {
                 }
             }
         }
-        if (dynamic_cast<AndCombinerToken*>(stack[first_token_location+2])) {
+        if (dynamic_cast<AndCombinerToken*>(stack[first_token_location+1])) {
+            click_chatter("it is an AndCombinerToken*");
             temp_tree = new AndCombinerToken();
             temp_tree->left_child = stack[first_token_location];
             temp_tree->right_child = stack[first_token_location+2];
         } else { // it is an OrCombinerToken*
+            click_chatter("it is an OrCombinerToken*");
             temp_tree = new OrCombinerToken();
             temp_tree->left_child = stack[first_token_location];
             temp_tree->right_child = stack[first_token_location+2];        

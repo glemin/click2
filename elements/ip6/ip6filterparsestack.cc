@@ -163,8 +163,8 @@ namespace ip6filtering {
             return 0;
         }
         
-        return evaluate_common_part(0, stack.size() - 1, false, errh);
-    }
+        return evaluate_common_part(0, stack.size() - 1, false, errh);  // stack.size() - 1 because the last token is the EndOfLineToken, which
+}                                                                       // is not interesting in the evaluation process
     
     /*
      * @brief evaluates what is between two parentheses and reduces the 2 parentheses and everything what was in between to one token
@@ -333,7 +333,7 @@ namespace ip6filtering {
                 }
             }
         }
-        if (dynamic_cast<AndCombinerToken*>(stack[first_token_location+2])) {
+        if (dynamic_cast<AndCombinerToken*>(stack[first_token_location+1])) {
             temp_tree = new AndCombinerToken();
             temp_tree->left_child = stack[first_token_location];
             temp_tree->right_child = stack[first_token_location+2];

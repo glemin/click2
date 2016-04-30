@@ -187,12 +187,14 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     errh->error("we have seen 'not' two times in a row, that is not allowed"); return -1;
                 }
             } else if(current_word == "and") {
+                click_chatter("we add an AndCombinerToken");
                 if (!just_seen_a_not_keyword) {
                     tokens.push_back(new AndCombinerToken());
                 } else {
                     errh->error("and token should not be preceded by a not"); return -1;
                 }
             } else if (current_word == "or") {
+                click_chatter("we add an OrCombinerToken");
                 if (!just_seen_a_not_keyword) {
                     tokens.push_back(new OrCombinerToken());
                 } else {
@@ -549,7 +551,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     errh->error("no second keyword after icmp; it should be followed by type");
                 }
             } else if (current_word == "ip6") {
-                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no second keyword after ip6; ip6 should be followed by vers, plen, flow, nxt, dscp, ect, ce, hlim, frag, unfrag.");
+                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no second keyword after ip6; ip6 should be followed by vers, plen, flow, nxt, dscp, ecn, ce, hlim, frag, unfrag.");
                 Token *token;
                 if (current_word == "vers") {           // version
                     skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after ip6 keyword");
@@ -591,16 +593,16 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     } else {    // no operator was given, equality is assumed and the current word already contains the data
                         token = IP6DSCPFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
                     }
-                } else if (current_word == "ect") {
+                } else if (current_word == "ecn") {
                     skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after ip6 keyword");
                     if (is_word_an_operator(current_word, an_operator) >= 0) {
                         skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "operator was only followed by blanks, an operator must be followed by data");
-                        token = IP6ECTFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                        token = IP6ECNFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
                     } else {
-                        token = IP6ECTFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                       
+                        token = IP6ECNFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                       
                     }
                 } else if (current_word == "ce") {
-                
+                    token = new IP6CEPrimitiveToken(just_seen_a_not_keyword, an_operator);           
                 } else if (current_word == "hlim") {    // hop limit
                     skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after ip6 keyword");
                     if (is_word_an_operator(current_word, an_operator) >= 0) {
@@ -614,7 +616,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                 } else if (current_word == "unfrag") {
                 
                 } else {
-                    errh->error("unkown keyword '%s' followed ip, it should be followed by vers, plen, flow, nxt, dscp, ect, ce, hlim, frag or unfrag."); return -1;
+                    errh->error("unkown keyword '%s' followed ip, it should be followed by vers, plen, flow, nxt, dscp, ecn, ce, hlim, frag or unfrag.", current_word.c_str()); return -1;
                 }
                 tokens.push_back(token);
             } else if (current_word == "ip") {
@@ -645,7 +647,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                     } else if (current_word == "unfrag") {
                     
                     } else {
-                        errh->error("unkown keyword '%s' followed ip, it should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag or unfrag."); return -1;
+                        errh->error("unkown keyword '%s' followed ip, it should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag or unfrag.", current_word.c_str()); return -1;
                     }
                 } else {
                     errh->error("no second keyword after ip; ip should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag, unfrag."); return -1;
