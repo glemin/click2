@@ -4,6 +4,7 @@
 #include "ip6filtertokens.hh"
 #include "ip6filter_operator.hh"
 #include <clicknet/tcp.h>
+#include "ip6helpers.hh"
 
 CLICK_DECLS
 
@@ -37,27 +38,34 @@ public:
     }
     
     virtual bool check_whether_packet_matches(Packet *packet) {
-        (void) packet;
-//        click_tcp* tcp_header_of_this_packet = (click_tcp*) packet->tcp_header();    
-    
-        switch (tcp_option_name) {
-            case SYN:
-                return take_inverse_on_not(true); // normally we simply give back the answer of the equality but when the not
-                                                                                                // keyword was seen we give back the inverse of this
-            case FIN:
-                return take_inverse_on_not(true);
-            
-            case ACK:
-                return take_inverse_on_not(true);
-                
-            case RST:
-                return take_inverse_on_not(true);
-                
-            case PSH:
-                return take_inverse_on_not(true);
-                
-            default:   // It is an URG
-                return take_inverse_on_not(true);
+        try {
+            if (ip6::get_higher_layer_protocol(packet) == 6) {  // 6 means IT IS a TCP packet            
+                click_tcp* tcp_header_of_this_packet = (click_tcp*) packet->tcp_header();
+                  
+                switch (tcp_option_name) {
+                    case SYN:
+                        return ((tcp_header_of_this_packet->th_flags & TH_SYN) >> 1);
+                    case FIN:
+                        return (tcp_header_of_this_packet->th_flags & TH_FIN);
+                    
+                    case ACK:
+                        return ((tcp_header_of_this_packet->th_flags & TH_ACK) >> 4);     // ALWAYS ADD HOW MUCH YOU NEED TO SHIFT TO THE RIGHT TO GET BIT INTO GOOD SPOT
+                                                                                        // In this particular case move 4 to the right
+                    case RST:
+                        return ((tcp_header_of_this_packet->th_flags & TH_RST) >> 2);
+                        
+                    case PSH:
+                        return ((tcp_header_of_this_packet->th_flags & TH_PUSH ) >> 3);
+                        
+                    default:   // It is an URG
+                        return ((tcp_header_of_this_packet->th_flags & TH_URG) >> 5);
+                }
+            } else {
+                return false;   // It is NOT A TCP packet           
+            }
+        } catch (String error) {
+            click_chatter(error.c_str());   // report the error that occured in the terminal
+            return false;
         }
     }
     
@@ -87,26 +95,35 @@ public:
     }
 
     virtual bool check_whether_packet_matches(Packet *packet) {
-        click_tcp* tcp_header_of_this_packet = (click_tcp*) packet->tcp_header();
-        
-        switch (an_operator) {
-            case EQUALITY:
-                return take_inverse_on_not(tcp_header_of_this_packet->th_win == window_length); // normally we simply give back the answer of the equality but when the not
-                                                                                                // keyword was seen we give back the inverse of this
-            case INEQUALITY:
-                return take_inverse_on_not(tcp_header_of_this_packet->th_win != window_length);
-            
-            case GREATER_THAN:
-                return take_inverse_on_not(tcp_header_of_this_packet->th_win > window_length);
+        try {
+            if (ip6::get_higher_layer_protocol(packet) == 6) {  // 6 means IT IS a TCP packet
+                click_tcp* tcp_header_of_this_packet = (click_tcp*) packet->tcp_header();
                 
-            case LESS_THAN:
-                return take_inverse_on_not(tcp_header_of_this_packet->th_win < window_length);
-                
-            case GREATER_OR_EQUAL_THAN:
-                return take_inverse_on_not(tcp_header_of_this_packet->th_win >= window_length);
-                
-            default:   // It is an LESS_OR_EQUAL_THAN
-                return take_inverse_on_not(tcp_header_of_this_packet->th_win <= window_length);
+                switch (an_operator) {
+                    case EQUALITY:
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win == window_length); // normally we simply give back the answer of the equality but when the not
+                                                                                                        // keyword was seen we give back the inverse of this
+                    case INEQUALITY:
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win != window_length);
+                    
+                    case GREATER_THAN:
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win > window_length);
+                        
+                    case LESS_THAN:
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win < window_length);
+                        
+                    case GREATER_OR_EQUAL_THAN:
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win >= window_length);
+                        
+                    default:   // It is an LESS_OR_EQUAL_THAN
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win <= window_length);
+                }
+            } else {
+                return false;   // It is NOT A TCP packet
+            }
+        } catch (String error) {
+            click_chatter(error.c_str());   // report the error that occured in the terminal
+            return false;
         }
     }
 

@@ -612,24 +612,35 @@ private:
     const uint8_t hop_limit;
 };
 
+/*
+ * @Brief Represents an IP6 frag Primitive.
+ * This one is true if the fragmentation extension header exists.
+ */
 class IP6FragPrimitiveToken : public PrimitiveToken {
+private:
 public:
     IP6FragPrimitiveToken(bool is_preceded_by_not_keyword, Operator an_operator) : PrimitiveToken(is_preceded_by_not_keyword, an_operator) { }
     virtual ~IP6FragPrimitiveToken() { }
     virtual IP6FragPrimitiveToken* clone_and_invert_not_keyword_seen() {
         return new IP6FragPrimitiveToken(!this->is_preceded_by_not_keyword, this->an_operator);
-    }    
+    }
     
     virtual void print_name() {
         click_chatter("IP6FragPrimitiveToken");
     }
+    
     virtual void print() {
         click_chatter("We encountered an IP6FragPrimitiveToken");
         PrimitiveToken::print();
     }
+    
     virtual bool check_whether_packet_matches(Packet *packet) {
-        (void) packet;
-        return true;
+   //     if(packet->frag_extension_header() != NULL) {   // This function works differently in Kernel & Userlevel mode.
+   //         return true;
+   //     }
+   //     return false;   // the fragmentation extension header was not found so frag is false
+   
+        return true;        // just for now <- delete this line
     }
 };
 

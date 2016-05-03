@@ -72,6 +72,7 @@ MarkIP6Header::simple_action(Packet *p)
                     if (!list_contains_value(nxt_seen_list,nxt)) {
                         nxt_seen_list.push_back(nxt);
                     } else {
+                        click_chatter("An error: we have seen the routing header twice"); // TODO remove this later
                                     // ERROR: we have seen the same nxt value twice, this is not allowed
                                     // push a packet on the second output
                     }
@@ -85,7 +86,7 @@ MarkIP6Header::simple_action(Packet *p)
                     if (!list_contains_value(nxt_seen_list,nxt)) {
                         nxt_seen_list.push_back(nxt);
                     } else {
-                    
+                        click_chatter("An error: we have seen the fragment header twice"); // TODO remove this later                    
                                     // ERROR: we have seen the same nxt value twice, this is not allowed
                                     // push a packet on the second output                    
                     }
@@ -96,6 +97,13 @@ MarkIP6Header::simple_action(Packet *p)
                     click_ip6_dest *destination_header = (click_ip6_dest*) header;
                     // TODO set the destination header pointer in the packet
                     nxt = destination_header->ip6d_nxt;
+                    if (!list_contains_value(nxt_seen_list,nxt)) {
+                        nxt_seen_list.push_back(nxt);
+                    } else {
+                        click_chatter("An error: we have seen the routing header twice"); // TODO remove this later
+                                    // ERROR: we have seen the same nxt value twice, this is not allowed
+                                    // push a packet on a the second output
+                    }
                     destination_header++;
                     header = (void*) destination_header;
                 } else if (nxt == 135) {

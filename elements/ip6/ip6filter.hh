@@ -18,6 +18,11 @@ filters IP packets by contents
 
 =d
 
+This element does not do bound checking. Be sure the elements you gave have
+their network header and transport layer header set. On behalve of the
+transport layer header make sure it is a legimitate packet. On working with
+extension headers, be sure they are not ill formed.
+
 Filters IP packets. IPFilter can have an arbitrary number of filters, which
 are ACTION-PATTERN pairs. The ACTIONs describe what to do with packets,
 while the PATTERNs are tcpdump(1)-like patterns; see IPClassifier(n) for a

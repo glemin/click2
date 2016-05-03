@@ -6,7 +6,6 @@
 #include <click/string.hh>
 #include <click/error.hh>
 #include "ip6filtertokens.hh"
-#include "ip6filtertokens_ip.hh"
 #include "ip6filtertokens_ip6.hh"
 #include "ip6filtertokens_icmp.hh"
 #include "ip6filtertokens_tcp.hh"

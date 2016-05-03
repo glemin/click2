@@ -597,7 +597,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                         skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "operator was only followed by blanks, an operator must be followed by data");
                         token = IP6ECNFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
                     } else {
-                        token = IP6ECNFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                       
+                        token = IP6ECNFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);           
                     }
                 } else if (current_word == "ce") {
                     token = new IP6CEPrimitiveToken(just_seen_a_not_keyword, an_operator);           
@@ -610,7 +610,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                         token = IP6HLimFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
                     }
                 } else if (current_word == "frag") {
-                
+           //         token = 
                 } else if (current_word == "unfrag") {
                 
                 } else {
@@ -618,39 +618,26 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                 }
                 tokens.push_back(token);
                 just_seen_a_not_keyword = false;
-            } else if (current_word == "ip") {
-                i = skip_blanks(to_be_lexed_string, i);
+            } else if (current_word == "tcp") {
+                click_chatter("tcp found !!!!");
                 Token *token;
-                if (i != -1) {  // if after skipping blanks we are not at the end of the filter line
-                    i = read_word(to_be_lexed_string, i, current_word);
-                    if (current_word == "vers") {
-                        token = IPVersionFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                
-                    } else if (current_word == "hl") {
-                         token = IPHeaderLengthFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                               
-                    } else if (current_word == "id") {
-                         token = IPIDFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                               
-                    } else if (current_word == "tos") {
-                         token = IPTOSFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                                               
-                    } else if (current_word == "dscp") {
-                         token = IPDSCPFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY); 
-                    } else if (current_word == "ecn") {
-                        token = IPECNFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);                                                           
-                    } else if (current_word == "ect") {
+                skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after tcp keyword");
+                if (current_word == "opt") {
+                    skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed the opt keyword");
                     
-                    } else if (current_word == "ce") {
-                    
-                    } else if (current_word == "ttl") {
-                        token = IPTTLFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
-                    } else if (current_word == "frag") {
-                    
-                    } else if (current_word == "unfrag") {
-                    
-                    } else {
-                        errh->error("unkown keyword '%s' followed ip, it should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag or unfrag.", current_word.c_str()); return -1;
-                    }
+                    if (is_word_an_operator(current_word, an_operator) >= 0) {
+                        skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "operator was only followed by blanks, an operator must be followed by data");
+                        token = TCPOptFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                    } else {    // no operator was given, equality is assumed and the current word already contains the data
+                        token = TCPOptFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                    }                    
+                } else if (current_word == "win") {
+                
                 } else {
-                    errh->error("no second keyword after ip; ip should be followed by vers, hl, id, tos, dscp, ect, ce, ttl, frag, unfrag."); return -1;
+                    errh->error("unkown keyword '%s' followed tcp, it should be opt or win", current_word.c_str()); return -1;
                 }
+                    
+            
             } else {
                 errh->error("unkown keyword '%s' found, see the click manual page for the list of acceptabl keywords", current_word.c_str());
                 return -1;        

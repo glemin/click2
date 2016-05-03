@@ -40,10 +40,6 @@ class MarkIP6Header : public Element {
   int configure(Vector<String> &, ErrorHandler *) CLICK_COLD;
 
   Packet *simple_action(Packet *);
-  
-  private:
-  
-  bool list_contains_value(Vector<uint8_t> list, uint8_t nxt);
 
 };
 

@@ -24,6 +24,9 @@ int read_word(String to_be_lexed_string, int i, String& read_word);
 /* for documentation see ip6filterlexer.cc, note: this function throws an exception */
 void skip_blanks_and_read_word(String to_be_lexed_string, int& i, String& read_word, const String error);
 
+/* for documentation see ip6filterlexer.cc */
+int is_word_an_operator(String word, Operator& an_operator);
+
 /*
  * @brief This class represents a Lexer that is used to lex a to be lexed string and split it up into a list of tokens tokens.
  * This specific Lexer is the Lexer associated with the IPFilter class.

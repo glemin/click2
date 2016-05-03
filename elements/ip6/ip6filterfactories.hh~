@@ -7,7 +7,6 @@
 #include <click/ip6address.hh>
 #include <click/etheraddress.hh>
 #include <click/args.hh>
-#include "ip6filtertokens_ip.hh"
 #include "ip6filtertokens_ip6.hh"
 #include "ip6filtertokens_ethernet.hh"
 #include "ip6filtertokens_tcp_udp.hh"
@@ -29,10 +28,6 @@ public:
      * @return An IPHostPrimitiveToken, an IP6HostPrimitiveToken, an EtherHostPrimitiveToken, or NULL.
      */
     static Token* create_token(String argument_of_host_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        IPAddress result;
-        if (IPAddressArg().parse(argument_of_host_keyword, result)) {
-            return new IPHostPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
         IP6Address result2;
         if (IP6AddressArg().parse(argument_of_host_keyword, result2)) {
             return new IP6HostPrimitiveToken(result2, just_seen_a_not_keyword, an_operator);
@@ -59,10 +54,6 @@ public:
      * @return An IPSrcHostPrimitiveToken, an IP6SrcHostPrimitiveToken, an EtherSrcHostPrimitiveToken, or NULL.
      */
     static Token* create_token(String argument_of_src_host_keywords, bool just_seen_a_not_keyword, Operator an_operator) {
-        IPAddress result;
-        if (IPAddressArg().parse(argument_of_src_host_keywords, result)) {
-            return new IPSrcHostPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
         IP6Address result2;
         if (IP6AddressArg().parse(argument_of_src_host_keywords, result2)) {
             return new IP6SrcHostPrimitiveToken(result2, just_seen_a_not_keyword, an_operator);
@@ -89,10 +80,6 @@ public:
      * @return An IPDstHostPrimitiveToken, an IP6DstHostPrimitiveToken, an EtherDstHostPrimitiveToken, or NULL.
      */
     static Token* create_token(String argument_of_dst_host_keywords, bool just_seen_a_not_keyword, Operator an_operator) {
-        IPAddress result;
-        if (IPAddressArg().parse(argument_of_dst_host_keywords, result)) {
-            return new IPDstHostPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
         IP6Address result2;
         if (IP6AddressArg().parse(argument_of_dst_host_keywords, result2)) {
             return new IP6DstHostPrimitiveToken(result2, just_seen_a_not_keyword, an_operator);
@@ -273,116 +260,6 @@ public:
     }
 };
 
-class IPVersionFactory {
-public:
-    static Token* create_token(String argument_of_ip_version_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        uint8_t result;
-        
-        IntArg* int_arg = new IntArg();
-        if (int_arg->template parse<uint8_t>(argument_of_ip_version_keyword, result)) {
-            if (result >= 16) { // This is a 4 bit field, the number must be at least 0 and maximally 15
-                return NULL;
-            }
-            return new IPVersionPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
-        
-        return NULL;    // An error occured, the argument following 'ip vers' is not a valid integer.         
-    }
-};
-
-class IPHeaderLengthFactory {
-public:
-    static Token* create_token(String argument_of_ip_header_length_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        uint8_t result;
-        
-        IntArg* int_arg = new IntArg();
-        if (int_arg->template parse<uint8_t>(argument_of_ip_header_length_keyword, result)) {
-            if (result >= 16) { // This is a 4 bit field, the number must be at least 0 and maximally 15
-                return NULL;
-            }
-            return new IPHeaderLengthPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
-        
-        return NULL;    // An error occured, the argument following 'ip hl' is not a valid integer.      
-    }
-};
-
-class IPIDFactory {
-public:
-    static Token* create_token(String argument_of_ip_id_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        uint16_t result;
-        
-        IntArg* int_arg = new IntArg();
-        if (int_arg->template parse<uint16_t>(argument_of_ip_id_keyword, result)) {
-            return new IPIDPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
-        
-        return NULL;    // An error occured, the argument following 'ip id' is not a valid integer.
-    }
-};
-
-class IPTOSFactory {
-public:
-    static Token* create_token(String argument_of_ip_tos_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        uint8_t result;
-        
-        IntArg* int_arg = new IntArg();
-        if (int_arg->template parse<uint8_t>(argument_of_ip_tos_keyword, result)) {
-            return new IPTOSPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
-        
-        return NULL;    // An error occured, the argument following 'ip tos' is not a valid integer.    
-    }
-};
-
-class IPDSCPFactory {
-public:
-    static Token* create_token(String argument_of_ip_dscp_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        uint8_t result;
-        
-        IntArg* int_arg = new IntArg();
-        if (int_arg->template parse<uint8_t>(argument_of_ip_dscp_keyword, result)) {
-            if (result > 63) {  /// This is a 6 bit field, the number must be at least 0 and maximally 63
-                return NULL;
-            }
-            return new IPDSCPPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
-        
-        return NULL;    // An error occured, the argument following 'ip dscp' is not a valid integer.    
-    }    
-};
-
-class IPECNFactory {
-public:
-    static Token* create_token(String argument_of_ip_ecn_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        uint8_t result;
-        
-        IntArg* int_arg = new IntArg();
-        if (int_arg->template parse<uint8_t>(argument_of_ip_ecn_keyword, result)) {
-            if (result > 3) {  /// This is a 2 bit field, the number must be at least 0 and maximally 3
-                return NULL;
-            }
-            return new IPECNPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
-        
-        return NULL;    // An error occured, the argument following 'ip ecn' is not a valid integer.       
-    }
-};
-
-class IPTTLFactory {
-public:
-    static Token* create_token(String argument_of_ip_ttl_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
-        uint8_t result;
-        
-        IntArg* int_arg = new IntArg();
-        if (int_arg->template parse<uint8_t>(argument_of_ip_ttl_keyword, result)) {
-            return new IPTTLPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
-        }
-        
-        return NULL;    // An error occured, the argument following 'ip ttl' is not a valid integer.      
-    }
-};
-
 class NetFactory {
 public:
     /*
@@ -403,17 +280,7 @@ public:
             
             IntArg *int_arg = new IntArg();
             int result;
-            IPAddress ip4address;
-            click_chatter("words_following_net[0].substring(0,slash_location-1) = %s", words_following_net[0].substring(0,slash_location-1).c_str());
-            click_chatter("words_following_net.size()-slash_location = %i", words_following_net[0].length()-slash_location-1);
-            if ((IPAddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip4address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
-            words_following_net[0].length()-slash_location-1),result))) {
-                if (result >= 0 && result <= 32) {
-                
-                } else {
-                    return NULL;    // This is wrong; the IPv4 address prefix should be between 0 and 32  
-                }
-            }
+
             IP6Address ip6address;
             if ((IP6AddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip6address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
             words_following_net[0].length()-slash_location-1),result))) {
@@ -433,10 +300,6 @@ public:
             }
             if (words_following_net[1] != "mask") {
                 return NULL;                // It is not in CIDR style so 'net' must be followed by at least 3 arguments from which the second one must be 'mask'
-            }
-            IPAddress ip4address, ip4mask;
-            if ((IPAddressArg().parse(words_following_net[0], ip4address)) && (IPAddressArg().parse(words_following_net[2], ip4mask))) {
-                return new IPNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
             }
             IP6Address ip6address, ip6mask;
             if ((IP6AddressArg().parse(words_following_net[0], ip6address)) && (IP6AddressArg().parse(words_following_net[2], ip6mask))) {
@@ -468,17 +331,7 @@ public:
             
             IntArg *int_arg = new IntArg();
             int result;
-            IPAddress ip4address;
-            click_chatter("words_following_net[0].substring(0,slash_location-1) = %s", words_following_net[0].substring(0,slash_location-1).c_str());
-            click_chatter("words_following_net.size()-slash_location = %i", words_following_net[0].length()-slash_location-1);
-            if ((IPAddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip4address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
-            words_following_net[0].length()-slash_location-1),result))) {
-                if (result >= 0 && result <= 32) {
-                
-                } else {
-                    return NULL;    // This is wrong; the IPv4 address prefix should be between 0 and 32  
-                }
-            }
+
             IP6Address ip6address;
             if ((IP6AddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip6address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
             words_following_net[0].length()-slash_location-1),result))) {
@@ -498,10 +351,6 @@ public:
             }
             if (words_following_net[1] != "mask") {
                 return NULL;                // It is not in CIDR style so 'net' must be followed by at least 3 arguments from which the second one must be 'mask'
-            }
-            IPAddress ip4address, ip4mask;
-            if ((IPAddressArg().parse(words_following_net[0], ip4address)) && (IPAddressArg().parse(words_following_net[2], ip4mask))) {
-                return new IPSrcNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
             }
             IP6Address ip6address, ip6mask;
             if ((IP6AddressArg().parse(words_following_net[0], ip6address)) && (IP6AddressArg().parse(words_following_net[2], ip6mask))) {
@@ -533,17 +382,6 @@ public:
             
             IntArg *int_arg = new IntArg();
             int result;
-            IPAddress ip4address;
-            click_chatter("words_following_net[0].substring(0,slash_location-1) = %s", words_following_net[0].substring(0,slash_location-1).c_str());
-            click_chatter("words_following_net.size()-slash_location = %i", words_following_net[0].length()-slash_location-1);
-            if ((IPAddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip4address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
-            words_following_net[0].length()-slash_location-1),result))) {
-                if (result >= 0 && result <= 32) {
-                
-                } else {
-                    return NULL;    // This is wrong; the IPv4 address prefix should be between 0 and 32  
-                }
-            }
             IP6Address ip6address;
             if ((IP6AddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip6address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
             words_following_net[0].length()-slash_location-1),result))) {
@@ -564,10 +402,6 @@ public:
             if (words_following_net[1] != "mask") {
                 return NULL;                // It is not in CIDR style so 'net' must be followed by at least 3 arguments from which the second one must be 'mask'
             }
-            IPAddress ip4address, ip4mask;
-            if ((IPAddressArg().parse(words_following_net[0], ip4address)) && (IPAddressArg().parse(words_following_net[2], ip4mask))) {
-                return new IPDstNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
-            }
             IP6Address ip6address, ip6mask;
             if ((IP6AddressArg().parse(words_following_net[0], ip6address)) && (IP6AddressArg().parse(words_following_net[2], ip6mask))) {
                 return new IP6DstNetPrimitiveToken(ip6address, ip6mask, just_seen_a_not_keyword, an_operator);            
@@ -578,6 +412,50 @@ public:
     }
 };
 
+class TCPOptFactory {
+public:
+    static Token* create_token(String tcp_option_to_be_inspected, bool just_seen_a_not_keyword, Operator an_operator) {
+        //'syn', 'fin', 'ack', 'rst', 'psh', 'urg'
+        if (tcp_option_to_be_inspected == "syn") {
+            if (!(an_operator == EQUALITY || an_operator == INEQUALITY)) {
+                return new TCPOptionNamePrimitiveToken(SYN, just_seen_a_not_keyword, an_operator);
+            } else {
+                throw String("tcp fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp syn");
+            }
+        } else if (tcp_option_to_be_inspected == "fin") {
+            if (!(an_operator == EQUALITY || an_operator == INEQUALITY)) {
+                return new TCPOptionNamePrimitiveToken(FIN, just_seen_a_not_keyword, an_operator);
+            } else {
+                throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt fin");
+            }    
+        } else if (tcp_option_to_be_inspected == "ack") {
+            if (!(an_operator == EQUALITY || an_operator == INEQUALITY)) {
+                return new TCPOptionNamePrimitiveToken(ACK, just_seen_a_not_keyword, an_operator);
+            } else {
+                throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt ack");
+            }    
+        } else if (tcp_option_to_be_inspected == "rst") {
+            if (!(an_operator == EQUALITY || an_operator == INEQUALITY)) {
+                return new TCPOptionNamePrimitiveToken(RST, just_seen_a_not_keyword, an_operator);
+            } else {
+                throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt rst");
+            }    
+        } else if (tcp_option_to_be_inspected == "psh") {
+            if (!(an_operator == EQUALITY || an_operator == INEQUALITY)) {
+                return new TCPOptionNamePrimitiveToken(PSH, just_seen_a_not_keyword, an_operator);
+            } else {
+                throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt psh");
+            }    
+        } else if (tcp_option_to_be_inspected == "urg") {
+            if (!(an_operator == EQUALITY || an_operator == INEQUALITY)) {
+                return new TCPOptionNamePrimitiveToken(URG, just_seen_a_not_keyword, an_operator);
+            } else {
+                throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt urg");
+            }    
+        } else {
+            throw String("tcp opt can not be followed by '%s', but should be followed by syn, fin, ack, rst, psh or urg", tcp_option_to_be_inspected.c_str());
+        }
+    }
 };
 
 CLICK_ENDDECLS

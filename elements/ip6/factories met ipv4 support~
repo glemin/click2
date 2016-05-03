@@ -1,0 +1,184 @@
+// PLUG INTO HOST FACTORY
+        IPAddress result;
+        if (IPAddressArg().parse(argument_of_host_keyword, result)) {
+            return new IPHostPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+
+
+// PLUG INTO SOURCE HOST FACTORY
+        IPAddress result;
+        if (IPAddressArg().parse(argument_of_src_host_keywords, result)) {
+            return new IPSrcHostPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+
+// PLUG INTO DEST HOST FACTORY
+        IPAddress result;
+        if (IPAddressArg().parse(argument_of_dst_host_keywords, result)) {
+            return new IPDstHostPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+
+// PLUG INTO NET FACTORY
+            // SOMEWHAT NEAR THE TOP
+            IPAddress ip4address;
+            if ((IPAddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip4address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
+            words_following_net[0].length()-slash_location-1),result))) {
+                if (result >= 0 && result <= 32) {
+                
+                } else {
+                    return NULL;    // This is wrong; the IPv4 address prefix should be between 0 and 32  
+                }
+            }
+            
+            // SOMEWHAT NEAR THE BOTTOM
+            IPAddress ip4address, ip4mask;
+            if ((IPAddressArg().parse(words_following_net[0], ip4address)) && (IPAddressArg().parse(words_following_net[2], ip4mask))) {
+                return new IPNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
+            }
+        
+// PLUG INTO SOURCE NET FACTORY
+            // SOMEWHAT NEAR THE TOP
+
+            IPAddress ip4address;
+            if ((IPAddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip4address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
+            words_following_net[0].length()-slash_location-1),result))) {
+                if (result >= 0 && result <= 32) {
+                
+                } else {
+                    return NULL;    // This is wrong; the IPv4 address prefix should be between 0 and 32  
+                }
+            }
+            
+            // SOMEWHAT NEAR THE BOTTOM
+            IPAddress ip4address, ip4mask;
+            if ((IPAddressArg().parse(words_following_net[0], ip4address)) && (IPAddressArg().parse(words_following_net[2], ip4mask))) {
+                return new IPSrcNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
+            }
+
+// PLUG INTO DEST NET FACTORY
+            // SOMEWHAT NEAR THE TOP
+            IPAddress ip4address;
+            if ((IPAddressArg().parse(words_following_net[0].substring(0,slash_location-1), ip4address)) && (int_arg->template parse<int>(words_following_net[0].substring(slash_location+1, 
+            words_following_net[0].length()-slash_location-1),result))) {
+                if (result >= 0 && result <= 32) {
+                
+                } else {
+                    return NULL;    // This is wrong; the IPv4 address prefix should be between 0 and 32  
+                }
+            }
+            
+            // SOMEWHAT NEAR THE BOTTOM
+            IPAddress ip4address, ip4mask;
+            if ((IPAddressArg().parse(words_following_net[0], ip4address)) && (IPAddressArg().parse(words_following_net[2], ip4mask))) {
+                return new IPDstNetPrimitiveToken(ip4address, ip4mask, just_seen_a_not_keyword, an_operator);
+            }
+
+
+class IPVersionFactory {
+public:
+    static Token* create_token(String argument_of_ip_version_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint8_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint8_t>(argument_of_ip_version_keyword, result)) {
+            if (result >= 16) { // This is a 4 bit field, the number must be at least 0 and maximally 15
+                return NULL;
+            }
+            return new IPVersionPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        return NULL;    // An error occured, the argument following 'ip vers' is not a valid integer.         
+    }
+};
+
+class IPHeaderLengthFactory {
+public:
+    static Token* create_token(String argument_of_ip_header_length_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint8_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint8_t>(argument_of_ip_header_length_keyword, result)) {
+            if (result >= 16) { // This is a 4 bit field, the number must be at least 0 and maximally 15
+                return NULL;
+            }
+            return new IPHeaderLengthPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        return NULL;    // An error occured, the argument following 'ip hl' is not a valid integer.      
+    }
+};
+
+class IPIDFactory {
+public:
+    static Token* create_token(String argument_of_ip_id_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint16_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint16_t>(argument_of_ip_id_keyword, result)) {
+            return new IPIDPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        return NULL;    // An error occured, the argument following 'ip id' is not a valid integer.
+    }
+};
+
+class IPTOSFactory {
+public:
+    static Token* create_token(String argument_of_ip_tos_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint8_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint8_t>(argument_of_ip_tos_keyword, result)) {
+            return new IPTOSPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        return NULL;    // An error occured, the argument following 'ip tos' is not a valid integer.    
+    }
+};
+
+class IPDSCPFactory {
+public:
+    static Token* create_token(String argument_of_ip_dscp_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint8_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint8_t>(argument_of_ip_dscp_keyword, result)) {
+            if (result > 63) {  /// This is a 6 bit field, the number must be at least 0 and maximally 63
+                return NULL;
+            }
+            return new IPDSCPPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        return NULL;    // An error occured, the argument following 'ip dscp' is not a valid integer.    
+    }    
+};
+
+class IPECNFactory {
+public:
+    static Token* create_token(String argument_of_ip_ecn_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint8_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint8_t>(argument_of_ip_ecn_keyword, result)) {
+            if (result > 3) {  /// This is a 2 bit field, the number must be at least 0 and maximally 3
+                return NULL;
+            }
+            return new IPECNPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        return NULL;    // An error occured, the argument following 'ip ecn' is not a valid integer.       
+    }
+};
+
+class IPTTLFactory {
+public:
+    static Token* create_token(String argument_of_ip_ttl_keyword, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint8_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint8_t>(argument_of_ip_ttl_keyword, result)) {
+            return new IPTTLPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        return NULL;    // An error occured, the argument following 'ip ttl' is not a valid integer.      
+    }
+};
