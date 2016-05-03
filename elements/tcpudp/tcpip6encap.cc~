@@ -48,11 +48,11 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
     uint16_t sport, dport;
     String daddr_str;    
     
-    _seq = htonl(0);
-    _ack = htonl(0);
+    _seq = 0;
+    _ack = 0;
     _flags = 0;
-    _off = htonl(0);    // a TCP header is at least 5, 32-bit words long.  <--- should be htonl(5) but it is not working <---- we want 5 as a default value
-    _flags2 = htonl(0);
+    _off = 0;    // a TCP header is at least 5, 32-bit words long.  <--- should be htonl(5) but it is not working <---- we want 5 as a default value
+    _flags2 = 0;
     _win = 0;
     _urp = 0;
 
@@ -69,7 +69,15 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
 	.read_p("WIN", IntArg(), _win)
 	.read_p("URP", IntArg(), _urp)
 	.complete() < 0)
-	return -1;
+	    return -1;
+	    
+/*    _seq = htonl(_seq);
+    _ack = htonl(_ack);
+    _off = _off;
+    _flags2 = htonl(_flags2);
+    _flags = htonl(_flags);
+    _win = htonl(_win);
+    _urp = _urp;    */
 
     if (daddr_str.equals("DST_ANNO", 8)) {
 	    _daddr = IP6Address();
@@ -80,14 +88,7 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
 	    return errh->error("bad DST");
     }
     
-    //     tcp_seq_t seq;  /* sequence number */
-    tcp_seq_t ack;  /* acknowledgement number */
-    unsigned off; /* data offset in words; specifies the size of the TCP header in 32 bit words; minimum size is 5 words and the maximum size 15 words */
-    uint8_t	flags;   /* flags */
-    unsigned flags2; /* more flags */
-    uint16_t win;   /* window */
-    uint16_t sum;   /* checksum */
-    uint16_t urp;   /* urgent pointer */
+
     
 
     _saddr = saddr;
@@ -149,11 +150,12 @@ TCPIP6Encap::simple_action(Packet *p_in)
     tcp->th_dport = _dport;
     tcp->th_seq = _seq;
     tcp->th_ack = _ack;
-    tcp->th_win = _win;
-    tcp->th_sum = 0;
-    tcp->th_flags = _flags;
-    tcp->th_flags2 = _flags2;
     tcp->th_off = _off;     /* data offset in words; contains the length of the header in 32-bit words; minimum 5, maximum 15. */
+    tcp->th_flags2 = _flags2;    
+    tcp->th_flags = _flags;
+    tcp->th_win = _win;    
+    tcp->th_sum = 0;
+    tcp->th_urp = _urp;
     
     //TO DO: ADD SUPPORT FOR CORRECT CHECKSUM IN CASE OF ROUTING HEADER
     tcp->th_sum = htons(in6_fast_cksum(&ip6->ip6_src, &ip6->ip6_dst, tcp->th_off, ip6->ip6_nxt, tcp->th_sum, (unsigned char *)(tcp), tcp->th_off)); //reuse the icmp6 checksum calculation from ip6ndsolicitor.cc, because ICMPv6 uses the same checksum as UDP over IPv6 (see RFC 2460, 8.1)
