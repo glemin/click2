@@ -4,7 +4,7 @@
 #include "ip6filtertokens.hh"
 #include "ip6filter_operator.hh"
 #include <clicknet/tcp.h>
-#include <click/ip6helpers.hh>
+#include "ip6helpers.hh"
 
 CLICK_DECLS
 
@@ -61,6 +61,7 @@ public:
                         return ((tcp_header_of_this_packet->th_flags & TH_URG) >> 5);
                 }
             } else {
+                click_chatter("not a TCP packet");
                 return false;   // It is NOT A TCP packet           
             }
         } catch (String error) {

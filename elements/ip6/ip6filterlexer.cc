@@ -630,7 +630,9 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                         token = TCPOptFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
                     } else {    // no operator was given, equality is assumed and the current word already contains the data
                         token = TCPOptFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
-                    }                    
+                    }
+                    tokens.push_back(token);
+                    just_seen_a_not_keyword = false;
                 } else if (current_word == "win") {
                 
                 } else {

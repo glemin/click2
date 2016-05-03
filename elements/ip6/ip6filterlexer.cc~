@@ -619,7 +619,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                 tokens.push_back(token);
                 just_seen_a_not_keyword = false;
             } else if (current_word == "tcp") {
-                click_chatter("tcp found !!!! :(");
+                click_chatter("tcp found !!!!");
                 Token *token;
                 skip_blanks_and_read_word(to_be_lexed_string, i, current_word, "no argument followed after tcp keyword");
                 if (current_word == "opt") {

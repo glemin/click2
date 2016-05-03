@@ -35,23 +35,23 @@ namespace ip6 {
 uint8_t get_higher_layer_protocol(Packet *packet) {
     click_ip6 *network_header_of_this_packet = (click_ip6*) packet->network_header();
     void* header = network_header_of_this_packet;
+    uint8_t nxt = network_header_of_this_packet->ip6_ctlun.ip6_un1.ip6_un1_nxt;
     
-    if (network_header_of_this_packet->ip6_ctlun.ip6_un1.ip6_un1_nxt == 0) {      // An Hop By Hop extension MAY ONLY occur at the start
+    if (nxt == 0) {      // An Hop By Hop extension MAY ONLY occur at the start
         click_ip6_hbh* hop_by_hop_header = (click_ip6_hbh*) header;
-        hop_by_hop_header = hop_by_hop_header->ip6h_nxt + hop_by_hop_header;
-        header = (void*) hop_by_hop_header;
+        hop_by_hop_header = hop_by_hop_header + hop_by_hop_header->ip6h_nxt + 1;
+        header = (void*) hop_by_hop_header;     // Now we start at this header; which is the packet after the Hop By Hop Header
     }
     
     // If it is not an extension header give back the protocol immediatly
-    if (!(network_header_of_this_packet->ip6_ctlun.ip6_un1.ip6_un1_nxt == 60         ||       // destination options header
-               network_header_of_this_packet->ip6_ctlun.ip6_un1.ip6_un1_nxt == 43    ||       // routing header
-               network_header_of_this_packet->ip6_ctlun.ip6_un1.ip6_un1_nxt    )) {      // fragment header
-                    return network_header_of_this_packet->ip6_ctlun.ip6_un1.ip6_un1_nxt;      // give it back immediatly
+    if (!(nxt == 60    ||       // destination options header
+          nxt == 43    ||       // routing header
+          nxt == 44   ))    {   // fragment header
+        return network_header_of_this_packet->ip6_ctlun.ip6_un1.ip6_un1_nxt;      // give it back immediatly
     }
-    
+        
     Vector<uint8_t> nxt_seen_list;
-    uint8_t nxt;
-    while (nxt == 0 || nxt == 60 || nxt == 43 || nxt == 44 || nxt == 135) {
+    while (nxt == 60 || nxt == 43 || nxt == 44) {
         if (nxt == 43) {
             click_ip6_rthdr *routing_header = (click_ip6_rthdr*) header;
 
@@ -88,7 +88,7 @@ uint8_t get_higher_layer_protocol(Packet *packet) {
             header = (void*) destination_header;
         } else {
             if (nxt == 0) {
-                throw String("We enountered two times a Hop By Hop Header which is not allowed");
+                throw String("We enountered a a Hop by Hop header but it was not the first header, this is not allowed");
             }
             return nxt; // nothing went wrong, send the thing back
         }
