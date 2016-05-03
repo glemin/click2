@@ -70,14 +70,6 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
 	.read_p("URP", IntArg(), _urp)
 	.complete() < 0)
 	    return -1;
-	    
-/*    _seq = htonl(_seq);
-    _ack = htonl(_ack);
-    _off = _off;
-    _flags2 = htonl(_flags2);
-    _flags = htonl(_flags);
-    _win = htonl(_win);
-    _urp = _urp;    */
 
     if (daddr_str.equals("DST_ANNO", 8)) {
 	    _daddr = IP6Address();
@@ -87,21 +79,11 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
     else {
 	    return errh->error("bad DST");
     }
-    
-
-    
 
     _saddr = saddr;
     _sport = htons(sport);
     _dport = htons(dport);
-/*    _seq = htonl(seq);
-    _ack = htonl(ack);
-    _flags = th_flags;
-    _off = htonl(off);
-    _th_flags2 = htonl(flags2);
-    _win = htons(win);
-    _urp = htons(urp); */
-    
+
 #if HAVE_FAST_CHECKSUM && FAST_CHECKSUM_ALIGNED
     if (!_checked_aligned) {
 	    int ans, c, o;

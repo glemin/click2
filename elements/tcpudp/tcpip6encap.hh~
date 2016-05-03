@@ -31,8 +31,47 @@ The TCPIP6Encap element adds both a UDP header and an IP6 header.
 The Strip element can be used by the receiver to get rid of the
 encapsulation header.
 
+Keywords are:
+
+=over 8
+
+=item OFF
+
+Data offset in words. Gives how long the TCP header is in 32-bit words. An standard TCP header without extra options has a size of 5 words. The maximum size is 20 words.
+Default value is 5
+
+=item SEQ
+
+Integer. Specifies the sequence number of the packet. Default is 0.
+
+=item ACK
+
+Integer. Specifies the ACK field of the packet. Default is 0.
+
+=item FLAGS
+
+Integer. Species the values of the FLAGS field (contains CWR, ECE, URG, ACK, PUSH, RST, SYN and FIN).  Default is 0 (no flags are set).
+
+=item FLAGS2
+
+Integer. Species the value of the other FLAGS field (contains reserved bytes and NS). Default is 0.
+
+=item WIN
+
+Integer. Specifies the value of the window size (in bytes). Default is 0.
+
+=item URG
+
+Integer. Specifies the value of the urgent pointer field. Default is 0 (urgent pointer not set).
+
+=back
+    
+
 =e
-  TCPIP6Encap(2001:2001:2001:2001::1, 1234, 2001:2001:2001:2001::2, 1234)
+    InfiniteSource(LIMIT 1)
+    -> TCPIP6Encap(SRC fa80::0202:b3ff:fe1e:8329, SPORT 1200, DST f880::0202:b3ff:fe1e:0002, DPORT 1500, OFF 5, FLAGS 1)
+    -> EtherEncap(0x0800, 00:0a:95:9d:68:16, 00:0a:95:9d:68:17)
+    -> ToDump("example.dump")
 
 =h src read/write
 
