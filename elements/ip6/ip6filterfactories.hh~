@@ -417,7 +417,7 @@ public:
     static Token* create_token(String tcp_option_to_be_inspected, bool just_seen_a_not_keyword, Operator an_operator) {
         //'syn', 'fin', 'ack', 'rst', 'psh', 'urg'
         if (tcp_option_to_be_inspected == "syn") {
-            if (an_operator == EQUALITY || an_operator == INEQUALITY)) {
+            if (an_operator == EQUALITY || an_operator == INEQUALITY) {
                 return new TCPOptionNamePrimitiveToken(SYN, just_seen_a_not_keyword, an_operator);
             } else {
                 throw String("tcp fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp syn");

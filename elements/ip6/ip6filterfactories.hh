@@ -423,7 +423,7 @@ public:
                 throw String("tcp fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp syn");
             }
         } else if (tcp_option_to_be_inspected == "fin") {
-            if (an_operator == EQUALITY && an_operator == INEQUALITY) {
+            if (an_operator == EQUALITY || an_operator == INEQUALITY) {
                 return new TCPOptionNamePrimitiveToken(FIN, just_seen_a_not_keyword, an_operator);
             } else {
                 throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt fin");
@@ -448,8 +448,8 @@ public:
             }    
         } else if (tcp_option_to_be_inspected == "urg") {
             if (an_operator == EQUALITY || an_operator == INEQUALITY) {
-                return new TCPOptionNamePrimitiveToken(URG, just_seen_a_not_keyword, an_operator);
             } else {
+                return new TCPOptionNamePrimitiveToken(URG, just_seen_a_not_keyword, an_operator);
                 throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt urg");
             }    
         } else {

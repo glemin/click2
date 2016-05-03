@@ -51,20 +51,25 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
     _seq = htonl(0);
     _ack = htonl(0);
     _flags = 0;
-    _off = htonl(0);
+    _off = htonl(0);    // a TCP header is at least 5, 32-bit words long.  <--- should be htonl(5) but it is not working <---- we want 5 as a default value
     _flags2 = htonl(0);
     _win = 0;
     _urp = 0;
-    
-    
 
     if (Args(conf, this, errh)
 	.read_mp("SRC", saddr)
 	.read_mp("SPORT", IPPortArg(IP_PROTO_UDP), sport)
 	.read_mp("DST", AnyArg(), daddr_str)
 	.read_mp("DPORT", IPPortArg(IP_PROTO_UDP), dport)
+	.read_p("SEQ", IntArg(), _seq)
+	.read_p("ACK", IntArg(), _ack)
+	.read_p("OFF", IntArg(), _off)
+	.read_p("FLAG2", IntArg(), _flags2)
+	.read_p("FLAG", IntArg(), _flags)
+	.read_p("WIN", IntArg(), _win)
+	.read_p("URP", IntArg(), _urp)
 	.complete() < 0)
-	return -1;
+	    return -1;
 
     if (daddr_str.equals("DST_ANNO", 8)) {
 	    _daddr = IP6Address();
@@ -128,7 +133,7 @@ TCPIP6Encap::simple_action(Packet *p_in)
     ip6->ip6_v = 6;		// then set version to 6
     uint16_t plen = htons(p->length() - sizeof(click_ip6));
     ip6->ip6_plen = plen;
-    ip6->ip6_nxt = IP_PROTO_UDP;
+    ip6->ip6_nxt = IP_PROTO_TCP;
     ip6->ip6_hlim = 0xff;
     ip6->ip6_src = _saddr;
     if (_use_dst_anno)
