@@ -136,11 +136,11 @@ TCPIP6Encap::simple_action(Packet *p_in)
     tcp->th_flags2 = _flags2;    
     tcp->th_flags = _flags;
     tcp->th_win = _win;    
-    tcp->th_sum = 0;
     tcp->th_urp = _urp;
-    
+    tcp->th_sum = 0;
+        
     //TO DO: ADD SUPPORT FOR CORRECT CHECKSUM IN CASE OF ROUTING HEADER
-    tcp->th_sum = htons(in6_fast_cksum(&ip6->ip6_src, &ip6->ip6_dst, tcp->th_off, ip6->ip6_nxt, tcp->th_sum, (unsigned char *)(tcp), tcp->th_off)); //reuse the icmp6 checksum calculation from ip6ndsolicitor.cc, because ICMPv6 uses the same checksum as UDP over IPv6 (see RFC 2460, 8.1)
+    tcp->th_sum = htons(in6_fast_cksum(&ip6->ip6_src, &ip6->ip6_dst, plen , IP_PROTO_TCP, 0, (unsigned char *)(tcp), plen)); //reuse the icmp6 checksum calculation from ip6ndsolicitor.cc, because ICMPv6 uses the same checksum as UDP over IPv6 (see RFC 2460, 8.1)
 
     return p;
 }
