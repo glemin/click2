@@ -68,6 +68,10 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
 	.read_p("FLAGS", IntArg(), _flags)
 	.read_p("WIN", IntArg(), _win)
 	.read_p("URP", IntArg(), _urp)
+//	.read_p("FRAG", BoolArg(), _frag_header_is_used);
+//	.read_p("FRAG_NXT", IntArg, _frag_next)
+//	.read_p("FRAG_OFFSET", IntArg, _frag_next)
+//	.read_p("FRAG_ID", IntArg, _frag_id)
 	.complete() < 0)
 	    return -1;
 
@@ -79,6 +83,10 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
     else {
 	    return errh->error("bad DST");
     }
+    
+    _win = htons(_win);
+    _urp = htons(_urp);
+    _seq = htonl(_seq);
 
     _saddr = saddr;
     _sport = htons(sport);
@@ -137,6 +145,7 @@ TCPIP6Encap::simple_action(Packet *p_in)
     tcp->th_flags = _flags;
     tcp->th_win = _win;    
     tcp->th_urp = _urp;
+    tcp->th_sum = 0;
         
     //TO DO: ADD SUPPORT FOR CORRECT CHECKSUM IN CASE OF ROUTING HEADER
     tcp->th_sum = htons(in6_fast_cksum(&ip6->ip6_src, &ip6->ip6_dst, plen , IP_PROTO_TCP, 0, (unsigned char *)(tcp), plen)); //reuse the icmp6 checksum calculation from ip6ndsolicitor.cc, because ICMPv6 uses the same checksum as UDP over IPv6 (see RFC 2460, 8.1)

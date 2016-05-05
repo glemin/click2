@@ -117,8 +117,8 @@ class TCPIP6Encap : public Element { public:
     tcp_seq_t _seq;  /* sequence number */
     tcp_seq_t _ack;  /* acknowledgement number */
     unsigned _off; /* data offset in words; specifies the size of the TCP header in 32 bit words; minimum size is 5 words and the maximum size 15 words */
-    uint8_t	_flags;   /* flags */
     unsigned _flags2; /* more flags */
+    uint8_t	_flags;   /* flags */
     uint16_t _win;   /* window */
     uint16_t _sum;   /* checksum */
     uint16_t _urp;   /* urgent pointer */

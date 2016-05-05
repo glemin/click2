@@ -1,0 +1,59 @@
+#ifndef CLICK_FIXUDPCHECKSUM_HH
+#define CLICK_FIXUDPCHECKSUM_HH
+#include <click/element.hh>
+#include <click/glue.hh>
+#include <click/atomic.hh>
+#include <clicknet/udp.h>
+CLICK_DECLS
+
+/*
+=c
+
+FixUDPChecksum()
+
+=s udp
+
+fixes UDP checksum for IPv6 packets
+
+=d
+
+Encapsulates each incoming packet in a UDP packet with source port SPORT, 
+and destination port DPORT. The UDP checksum is calculated if CHECKSUM? is
+true; it is true by default.
+
+The UDPEncap element adds a UDP header.
+
+The Strip element can be used by the receiver to get rid of the
+encapsulation header.
+
+=e
+  UDPEncap(1200, 1500)
+
+=h sport read/write
+
+Returns or sets the SPORT source port argument.
+
+=h dport read/write
+
+Returns or sets the DPORT destination port argument.
+
+=a Strip, IPEncap, IP6Encap, HopByHopEncap, DestinationOptionsEncap, RoutingEncap, FragmentEncap
+*/
+
+class FixUDPChecksum : public Element { public:
+
+    FixUDPChecksum() CLICK_COLD;
+    ~FixUDPChecksum() CLICK_COLD;
+
+    const char *class_name() const	{ return "FixUDPChecksum"; }
+    const char *port_count() const	{ return PORTS_1_1; }
+    const char *flags() const		{ return "A"; }
+
+    int configure(Vector<String> &, ErrorHandler *) CLICK_COLD;
+
+    Packet *simple_action(Packet *);
+
+};
+
+CLICK_ENDDECLS
+#endif

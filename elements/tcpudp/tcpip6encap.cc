@@ -68,6 +68,10 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
 	.read_p("FLAGS", IntArg(), _flags)
 	.read_p("WIN", IntArg(), _win)
 	.read_p("URP", IntArg(), _urp)
+//	.read_p("FRAG", BoolArg(), _frag_header_is_used);
+//	.read_p("FRAG_NXT", IntArg, _frag_next)
+//	.read_p("FRAG_OFFSET", IntArg, _frag_next)
+//	.read_p("FRAG_ID", IntArg, _frag_id)
 	.complete() < 0)
 	    return -1;
 
@@ -79,6 +83,11 @@ TCPIP6Encap::configure(Vector<String> &conf, ErrorHandler *errh)
     else {
 	    return errh->error("bad DST");
     }
+    
+    _win = htons(_win);
+    _urp = htons(_urp);
+    _seq = htonl(_seq);
+    _ack = htonl(_ack);
 
     _saddr = saddr;
     _sport = htons(sport);
