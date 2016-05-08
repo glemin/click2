@@ -5,7 +5,7 @@ CLICK_DECLS
 
 /*
  * =c
- * FragmentationEncap([OFFSET])
+ * FragmentationEncap(PROTO, OFFSET, M, [ID])
  * =s ip6
  *
  * =d
@@ -16,8 +16,8 @@ CLICK_DECLS
  *
  * InfiniteSource(LIMIT 1)
  *   -> UDPEncap(1200,1500)
- *   -> FragmentationEncap(PROTO 17)
- *   -> IP6Encap(SRC fa80::0202:b3ff:fe1e:8329, DST f880::0202:b3ff:fe1e:0002, PROTO 60)
+ *   -> FragmentationEncap(PROTO 17, OFFSET 0, ID 0, M 0)
+ *   -> IP6Encap(SRC fa80::0202:b3ff:fe1e:8329, DST f880::0202:b3ff:fe1e:0002, PROTO 44)
  *   -> EtherEncap(0x0800, 00:0a:95:9d:68:16, 00:0a:95:9d:68:17)
  *   -> ToDump("ip6.dump")
  *
