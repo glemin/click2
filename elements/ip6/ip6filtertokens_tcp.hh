@@ -101,22 +101,22 @@ public:
                 
                 switch (an_operator) {
                     case EQUALITY:
-                        return take_inverse_on_not(tcp_header_of_this_packet->th_win == window_length); // normally we simply give back the answer of the equality but when the not
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win == htons(window_length)); // normally we simply give back the answer of the equality but when the not
                                                                                                         // keyword was seen we give back the inverse of this
                     case INEQUALITY:
-                        return take_inverse_on_not(tcp_header_of_this_packet->th_win != window_length);
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win != htons(window_length));
                     
                     case GREATER_THAN:
-                        return take_inverse_on_not(tcp_header_of_this_packet->th_win > window_length);
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win > htons(window_length));
                         
                     case LESS_THAN:
-                        return take_inverse_on_not(tcp_header_of_this_packet->th_win < window_length);
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win < htons(window_length));
                         
                     case GREATER_OR_EQUAL_THAN:
-                        return take_inverse_on_not(tcp_header_of_this_packet->th_win >= window_length);
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win >= htons(window_length));
                         
                     default:   // It is an LESS_OR_EQUAL_THAN
-                        return take_inverse_on_not(tcp_header_of_this_packet->th_win <= window_length);
+                        return take_inverse_on_not(tcp_header_of_this_packet->th_win <= htons(window_length));
                 }
             } else {
                 return false;   // It is NOT A TCP packet

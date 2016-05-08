@@ -26,7 +26,7 @@ public:
     }
     
     virtual bool check_whether_packet_matches(Packet *packet) {
-        click_icmp* icmp_header_of_this_packet = (click_icmp*) packet->icmp_header();    
+        click_icmp* icmp_header_of_this_packet = (click_icmp*) packet->icmp_header();   
     
         switch (an_operator) {
             case EQUALITY:

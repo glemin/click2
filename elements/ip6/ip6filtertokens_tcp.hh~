@@ -61,7 +61,6 @@ public:
                         return ((tcp_header_of_this_packet->th_flags & TH_URG) >> 5);
                 }
             } else {
-                click_chatter("not a TCP packet");
                 return false;   // It is NOT A TCP packet           
             }
         } catch (String error) {

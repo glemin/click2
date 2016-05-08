@@ -423,7 +423,7 @@ public:
                 throw String("tcp fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp syn");
             }
         } else if (tcp_option_to_be_inspected == "fin") {
-            if (an_operator == EQUALITY && an_operator == INEQUALITY) {
+            if (an_operator == EQUALITY || an_operator == INEQUALITY) {
                 return new TCPOptionNamePrimitiveToken(FIN, just_seen_a_not_keyword, an_operator);
             } else {
                 throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt fin");
@@ -448,14 +448,27 @@ public:
             }    
         } else if (tcp_option_to_be_inspected == "urg") {
             if (an_operator == EQUALITY || an_operator == INEQUALITY) {
-                return new TCPOptionNamePrimitiveToken(URG, just_seen_a_not_keyword, an_operator);
             } else {
+                return new TCPOptionNamePrimitiveToken(URG, just_seen_a_not_keyword, an_operator);
                 throw String("tcp opt fin was followed by an incorrect operator, only '==' and '!=' are allowed with tcp opt urg");
             }    
         } else {
             throw String("tcp opt can not be followed by '") + String(tcp_option_to_be_inspected) + String("', but should be followed by syn, fin, ack, rst, psh or urg");
         }
     }
+};
+
+class TCPWinFactory {
+public:
+    static Token* create_token(String argument_of_tcp_win, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint16_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint16_t>(argument_of_tcp_win, result)) {
+            return new TCPReceiveWindowLengthPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        throw String("tcp win was followed by the unparsable argument '") + argument_of_tcp_win + String("', it must be followed by an integer between 0 and 65535");   
 };
 
 };

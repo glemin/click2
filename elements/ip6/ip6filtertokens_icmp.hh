@@ -30,22 +30,22 @@ public:
     
         switch (an_operator) {
             case EQUALITY:
-                return take_inverse_on_not(icmp_header_of_this_packet->icmp_type == icmp_type); // normally we simply give back the answer of the equality but when the not
+                return take_inverse_on_not((icmp_header_of_this_packet->icmp_type >> 8) == icmp_type); // normally we simply give back the answer of the equality but when the not
                                                                                                 // keyword was seen we give back the inverse of this
             case INEQUALITY:
-                return take_inverse_on_not(icmp_header_of_this_packet->icmp_type != icmp_type);
+                return take_inverse_on_not((icmp_header_of_this_packet->icmp_type >> 8) != icmp_type);
             
             case GREATER_THAN:
-                return take_inverse_on_not(icmp_header_of_this_packet->icmp_type > icmp_type);
+                return take_inverse_on_not((icmp_header_of_this_packet->icmp_type >> 8) > icmp_type);
                 
             case LESS_THAN:
-                return take_inverse_on_not(icmp_header_of_this_packet->icmp_type < icmp_type);
+                return take_inverse_on_not((icmp_header_of_this_packet->icmp_type >> 8) < icmp_type);
                 
             case GREATER_OR_EQUAL_THAN:
-                return take_inverse_on_not(icmp_header_of_this_packet->icmp_type >= icmp_type);
+                return take_inverse_on_not((icmp_header_of_this_packet->icmp_type >> 8) >= icmp_type);
                 
             default:   // It is an LESS_OR_EQUAL_THAN
-                return take_inverse_on_not(icmp_header_of_this_packet->icmp_type <= icmp_type);
+                return take_inverse_on_not((icmp_header_of_this_packet->icmp_type >> 8) <= icmp_type);
         }
     }
     

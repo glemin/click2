@@ -458,6 +458,20 @@ public:
     }
 };
 
+class TCPWinFactory {
+public:
+    static Token* create_token(String argument_of_tcp_win, bool just_seen_a_not_keyword, Operator an_operator) {
+        uint16_t result;
+        
+        IntArg* int_arg = new IntArg();
+        if (int_arg->template parse<uint16_t>(argument_of_tcp_win, result)) {
+            return new TCPReceiveWindowLengthPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
+        }
+        
+        throw String("tcp win was followed by the unparsable argument '") + argument_of_tcp_win + String("', it must be followed by an integer between 0 and 65535");
+     }
+};
+
 };
 
 CLICK_ENDDECLS
