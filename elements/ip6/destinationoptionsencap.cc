@@ -65,11 +65,11 @@ DestinationOptionsEncap::simple_action(Packet *p_in)
 
     DestinationOptionsWithPad6 *destination_options_header = reinterpret_cast<DestinationOptionsWithPad6 *>(p->data());
 
-    // set the values of the Hop-by-Hop extension header
+    // set the values of the Destination Options extension header
     destination_options_header->ip6d_nxt = _next_header;
     destination_options_header->ip6d_len = 0;
     
-  //  Pad6* pad6_header = (Pad6*) (destination_options_header + 1);
+    // set the values of the Pad6 option
     destination_options_header->option_type = 1;
     destination_options_header->option_data_len = 4;
     destination_options_header->option_data = 0;
