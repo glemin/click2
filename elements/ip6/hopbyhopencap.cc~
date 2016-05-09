@@ -1,5 +1,5 @@
 /*
- * hopbyhopencap.{cc,hh} -- encapsulates packet in a Hop-by-Hop IPv6 extension header
+ * hopbyhopencap.{cc,hh} -- encapsulates packet in a Pad6 Hop-by-Hop Extension header
  * Glenn Minne
  *
  * Copyright (c) 1999-2000 Massachusetts Institute of Technology
@@ -33,11 +33,8 @@ HopByHopEncap::~HopByHopEncap()
 int
 HopByHopEncap::configure(Vector<String> &conf, ErrorHandler *errh)
 {
-    _header_ext_length = 0;
-    
     if (Args(conf, this, errh)
 	.read_mp("PROTO", IntArg(), _next_header)
-	.read_p("LEN", IntArg(), _header_ext_length)
 	.complete() < 0)
 	    return -1;    
     
@@ -47,24 +44,38 @@ HopByHopEncap::configure(Vector<String> &conf, ErrorHandler *errh)
 Packet *
 HopByHopEncap::simple_action(Packet *p_in)
 {
-    WritablePacket *p = p_in->push(sizeof(click_ip6_hbh) + (_header_ext_length * 8));  // _header_ext_length gives the size in 64-bit/8-octet units/8 byte units.
-    click_ip6_hbh *hbh = reinterpret_cast<click_ip6_hbh *>(p->data());
-    hbh->ip6h_nxt = _next_header;
-    hbh->ip6h_len = _header_ext_length;
+    // A Hop-by-Hop header has a common part followed by an option part, which contains one or multiple option.
+    // This header contains one option, the Pad6 option, a special type of a PadN option. It adds 6 bytes of padding to 
+    // our Hop-by-hop Extension Header.
+    struct HopByHopOptionsWithPad6 {
+        // common hop-byhop extension header part
+        uint8_t ip6h_nxt;           /* next header */
+        uint8_t ip6h_len;           /* 8-bit unsigned integer.  Length of the
+                                       Destination Options header in 8-octet units, not
+                                       including the first 8 octets. */
+        // the actual Pad6 option
+        uint8_t option_type;        // Every PadN option including Pad6 has an option type of 1.
+        uint8_t option_data_len;    // This explains about which specific PadN option we are talking about. We are talking about Pad6 so we need to insert 4.
+        uint32_t option_data;       // Here are our 4 remaining bits of data so that we have in total 6 bytes of padding. These bits must all be set to zero.
+                                    // put all zeroes here.
+    };
+
+    WritablePacket *p = p_in->push(8); // make room for the new Destination Options extension header
+
+    if (!p)
+        return 0;
+
+    HopByHopOptionsWithPad6 *hop_by_hop_header = reinterpret_cast<HopByHopOptionsWithPad6 *>(p->data());
+
+    // set the values of the Destination Options extension header
+    hop_by_hop_header->ip6h_nxt = _next_header;
+    hop_by_hop_header->ip6h_len = 0;
     
-    uint16_t *options_and_padding = (uint16_t*) hbh++;
-    *options_and_padding = 0;
-    options_and_padding++;
-    *options_and_padding = 0;
-    options_and_padding++;
-    *options_and_padding = 0;
-    if (_header_ext_length > 0) {
-        uint64_t *options_and_padding = (uint64_t*) options_and_padding++;
-        for (int i = 0; i < _header_ext_length; i++) {
-            *options_and_padding = 0;
-            options_and_padding++;
-        }
-    }
+    // set the values of the Pad6 option
+    hop_by_hop_header->option_type = 1;
+    hop_by_hop_header->option_data_len = 4;
+    hop_by_hop_header->option_data = 0;
+
     return p;
 }
 

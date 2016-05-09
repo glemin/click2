@@ -69,7 +69,7 @@ DestinationOptionsEncap::simple_action(Packet *p_in)
     destination_options_header->ip6d_nxt = _next_header;
     destination_options_header->ip6d_len = 0;
     
-    // set the option Pad6 specific options
+    // set the values of the Pad6 option
     destination_options_header->option_type = 1;
     destination_options_header->option_data_len = 4;
     destination_options_header->option_data = 0;

@@ -38,9 +38,6 @@ public:
     
 private:
     uint8_t _next_header;               /* next header */
-    uint8_t _header_ext_length;         /* 8-bit unsigned integer.  Length of the
-                                           Destination Options header in 8-octet units, not
-                                           including the first 8 octets. */
 };
 
 CLICK_ENDDECLS

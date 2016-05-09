@@ -49,8 +49,10 @@ DestinationOptionsEncap::simple_action(Packet *p_in)
     // our Destination Options Extension Header.
     struct DestinationOptionsWithPad6 {
         // common destination options extension header part
-        uint8_t ip6d_nxt;
-        uint8_t ip6d_len;
+        uint8_t ip6d_nxt;           /* next header */
+        uint8_t ip6d_len;           /* 8-bit unsigned integer.  Length of the
+                                       Destination Options header in 8-octet units, not
+                                       including the first 8 octets. */
         // the actual Pad6 option
         uint8_t option_type;        // Every PadN option including Pad6 has an option type of 1.
         uint8_t option_data_len;    // This explains about which specific PadN option we are talking about. We are talking about Pad6 so we need to insert 4.

@@ -17,7 +17,7 @@ CLICK_DECLS
  *
  * InfiniteSource(LIMIT 1)
  *   -> UDPEncap(1200,1500)
- *   -> DestinationOptionsEncap(PROTO 17, OPTION 0)
+ *   -> DestinationOptionsEncap(PROTO 17)
  *   -> IP6Encap(SRC fa80::0202:b3ff:fe1e:8329, DST f880::0202:b3ff:fe1e:0002, PROTO 60)
  *   -> EtherEncap(0x0800, 00:0a:95:9d:68:16, 00:0a:95:9d:68:17)
  *   -> ToDump("ip6.dump")
@@ -38,9 +38,6 @@ public:
     
 private:
     uint8_t _next_header;               /* next header */
-    uint8_t _header_ext_length;         /* 8-bit unsigned integer.  Length of the
-                                           Destination Options header in 8-octet units, not
-                                           including the first 8 octets. */
 };
 
 CLICK_ENDDECLS
