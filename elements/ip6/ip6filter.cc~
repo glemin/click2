@@ -59,7 +59,7 @@ IP6Filter::configure(Vector<String> &conf, ErrorHandler *errh)
             click_chatter("we hebben success gelijk aan %i , na de parser", success);
             if (success >= 0) {
                 click_chatter("we gaan printen");
-       //         ast.print();
+                ast.print();
                 click_chatter("we hebben geprint");
                 ast_list.push_back(ast);    // add this AST to the list of ASTs
             }
@@ -80,7 +80,9 @@ IP6Filter::push(int, Packet *p)
     for (int i = 0; i < ast_list.size(); i++) {     // for each AST (abstract syntax tree) of the abstract syntax list do
         const bool matches = ast_list[i].check_whether_packet_matches(p);
         if (matches) {
-            click_chatter("it matches"); 
+            click_chatter("it matches");
+            output(i).push(p);
+            return;
         } else {
             click_chatter("it doesn't match");
         }

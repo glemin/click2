@@ -128,11 +128,11 @@ IP6Fragmenter::add_handlers()
 
 
 void
-IP6Fragmenter::push(int, Packet *p)
+IP6Fragmenter::push(int, Packet *p_in)
 {
   // click_chatter("IP6Fragmenter::push, packet length is %x \n", p->length());
 
-    if (p->length() <= _mtu) {
+    if (p_in->length() <= _mtu) {
         // click_chatter("**********************1");
         output(0).push(p);
     } else {

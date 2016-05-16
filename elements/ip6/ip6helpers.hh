@@ -6,6 +6,7 @@ CLICK_DECLS
 
 namespace ip6 {
     // public functions
+    bool has_fragmentation_extension_header(Packet *packet);
     uint8_t get_higher_layer_protocol(Packet *packet);
     
     // functions that should only be accessible from functions in the ip6 namespace

@@ -25,6 +25,33 @@
 CLICK_DECLS
 namespace ip6 {
 
+/** @brief Starts at the packet's network header pointer and searches for a fragmentation extension header.
+  * @return true on found, false on not found
+  */
+bool has_fragmentation_extension_header(Packet *packet) {
+    uint8_t nxt = ((click_ip6*) packet->network_header())->ip6_nxt;     // the next header number
+    void *nxt_header = ((click_ip6*) packet->network_header() + 1);     // a pointer to the next header
+    while (true) {
+        if (nxt == 44) {
+            return true;        // we have found an header
+        } else if (nxt == 0) {
+            nxt = ((click_ip6_hbh*) nxt_header)->ip6h_nxt;      
+            nxt_header = (click_ip6_hbh*) nxt_header + ((click_ip6_hbh*) nxt_header)->ip6h_len + 1;            
+        } else if (nxt == 43) {
+            nxt = ((click_ip6_rthdr *) nxt_header)->ip6r_nxt;
+            nxt_header = (click_ip6_rthdr *) nxt_header + ((click_ip6_rthdr *) nxt_header)->ip6r_len + 1;
+        } else if (nxt == 60) {
+            nxt = ((click_ip6_dest*) nxt_header)->ip6d_nxt;      
+            nxt_header = (click_ip6_dest*) nxt_header + ((click_ip6_dest*) nxt_header)->ip6d_len + 1;
+        } else {
+            return false;
+        }
+    }
+}
+
+
+
+
 /** @brief Returns the higher layer protocol of this IPv6 packet.
   * In case extension headers are present, follow the extension
   * header chain to return the higher layer protocol
@@ -33,6 +60,7 @@ namespace ip6 {
   * fragment header extension headers.
   */
 uint8_t get_higher_layer_protocol(Packet *packet) {
+//    click_chatter("we enteren get_higher_layer_protocol(Packet *packet)");
     click_ip6 *network_header_of_this_packet = (click_ip6*) packet->network_header();
     void* header = network_header_of_this_packet;
     uint8_t nxt = network_header_of_this_packet->ip6_ctlun.ip6_un1.ip6_un1_nxt;
@@ -65,7 +93,6 @@ uint8_t get_higher_layer_protocol(Packet *packet) {
             header = (void*) routing_header;
         } else if (nxt == 44) {
             click_ip6_fragment *fragment_header = (click_ip6_fragment*) header;
-            // TODO set the fragment header pointer in the packet
 
             nxt = fragment_header->ip6_frag_nxt;
             if (!list_contains_value(nxt_seen_list,nxt)) {
@@ -90,6 +117,7 @@ uint8_t get_higher_layer_protocol(Packet *packet) {
             if (nxt == 0) {
                 throw String("We enountered a a Hop by Hop header but it was not the first header, this is not allowed");
             }
+            click_chatter("we gaan %u returnen", nxt);
             return nxt; // nothing went wrong, send the thing back
         }
     }
