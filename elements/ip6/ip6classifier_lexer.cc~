@@ -136,21 +136,6 @@ is_word_an_operator(String word, Operator& an_operator) {
     }
 }
 
-// Tells which operator was seen, if one was found in the first place
-/*Operator which_operator_was_seen(String current_word, int& i) {
-    int old_i = i;
-    i = read_word(to_be_lexed_string, i, current_word);
-    Operator an_operator;
-    if (is_word_an_operator(current_word,an_operator)) {
-        return an_operator;
-    } else {
-        i = old_i;          // Go back to the previous word
-        return EQUALITY;
-    }   
-}*/
-
-// pop, push, 
-
 /*
  * @brief This function splits up the string with which the Lexer was initialized up into tokens.
  * These tokens are the standard units the tcpdumplikesyntax is build up from. Basically we could

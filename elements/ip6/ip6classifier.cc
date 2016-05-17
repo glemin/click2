@@ -97,7 +97,6 @@ IP6Classifier::push(int, Packet *p)
                 _time_stamp_vector2.push_back(Timestamp::now());
 	            _number_of_test_packets_sent++;
             } else if (_number_of_test_packets_sent == _number_of_test_packets_to_be_sent) {
-                click_chatter("write into example 2");
                 _number_of_test_packets_sent++;
                 
                 // write the data to a file
@@ -114,7 +113,6 @@ IP6Classifier::push(int, Packet *p)
                     average += ((_time_stamp_vector2[i].nsecval() - _time_stamp_vector[i].nsecval()));
                 }
                 average = average / (int64_t) _number_of_test_packets_to_be_sent;
-                click_chatter("the average = %i ", average);
                 std::ofstream myfile2;
                 myfile2.open("average.txt");
                 myfile2 << average << " ";
@@ -139,7 +137,6 @@ IP6Classifier::push(int, Packet *p)
         _time_stamp_vector2.push_back(Timestamp::now());
 	    _number_of_test_packets_sent++;
     } else if (_number_of_test_packets_sent == _number_of_test_packets_to_be_sent) {
-        click_chatter("write into example 2");
         _number_of_test_packets_sent++;
         
         // write the data to a file
@@ -156,7 +153,6 @@ IP6Classifier::push(int, Packet *p)
             average += ((_time_stamp_vector2[i].nsecval() - _time_stamp_vector[i].nsecval()));
         }
         average = average / (int64_t) _number_of_test_packets_to_be_sent;
-        click_chatter("the average = %i ", average);
         std::ofstream myfile2;
         myfile2.open("average.txt");
         myfile2 << average << " ";

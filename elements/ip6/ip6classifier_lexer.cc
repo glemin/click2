@@ -583,7 +583,7 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                 } else if (current_word == "unfrag") {
                     token = new IP6UnfragPrimitiveToken(just_seen_a_not_keyword, EQUALITY);
                 } else {
-                    errh->error("unkown keyword '%s' followed ip, it should be followed by vers, plen, flow, nxt, dscp, ecn, ce, hlim, frag or unfrag.", current_word.c_str()); return -1;
+                    errh->error("unkown keyword '%s' followed ip6, it should be followed by vers, plen, flow, nxt, dscp, ecn, ce, hlim, frag or unfrag.", current_word.c_str()); return -1;
                 }
                 tokens.push_back(token);
                 just_seen_a_not_keyword = false;

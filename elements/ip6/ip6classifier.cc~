@@ -117,7 +117,7 @@ IP6Classifier::push(int, Packet *p)
                 click_chatter("the average = %i ", average);
                 std::ofstream myfile2;
                 myfile2.open("average.txt");
-                myfile2 << average;
+                myfile2 << average << " ";
                 myfile2.close();
                 
                 // close program
