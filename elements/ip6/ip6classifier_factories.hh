@@ -275,7 +275,6 @@ public:
         // Determine whether it is CIDR style
         int slash_location;     // if there is a slash its location will be hold in this variable
         if ((slash_location = words_following_net[0].find_left('/')) != -1) {        // It is CIDR style
-            click_chatter("CIDR style notation confirmed");
             was_written_in_CIDR_style = true;
             
             IntArg *int_arg = new IntArg();
@@ -293,7 +292,6 @@ public:
                 return NULL;    // What is left of the slash is not an IPv4 or IPv6 address
             }
         } else {                                                            // It is NOT CIDR style
-            click_chatter("No CIDR style notation");
             was_written_in_CIDR_style = false;
             if (words_following_net.size() != 3) {
                 return NULL;                // It is not in CIDR style so 'net' must be followed by at least 3 arguments
@@ -326,7 +324,6 @@ public:
         // Determine whether it is CIDR style
         int slash_location;     // if there is a slash its location will be hold in this variable
         if ((slash_location = words_following_net[0].find_left('/')) != -1) {        // It is CIDR style
-            click_chatter("CIDR style notation confirmed");
             was_written_in_CIDR_style = true;
             
             IntArg *int_arg = new IntArg();
@@ -344,7 +341,6 @@ public:
                 return NULL;    // What is left of the slash is not an IPv4 or IPv6 address
             }
         } else {                                                            // It is NOT CIDR style
-            click_chatter("No CIDR style notation");
             was_written_in_CIDR_style = false;
             if (words_following_net.size() != 3) {
                 return NULL;                // It is not in CIDR style so 'net' must be followed by at least 3 arguments
@@ -377,7 +373,6 @@ public:
         // Determine whether it is CIDR style
         int slash_location;     // if there is a slash its location will be hold in this variable
         if ((slash_location = words_following_net[0].find_left('/')) != -1) {        // It is CIDR style
-            click_chatter("CIDR style notation confirmed");
             was_written_in_CIDR_style = true;
             
             IntArg *int_arg = new IntArg();
@@ -394,7 +389,6 @@ public:
                 return NULL;    // What is left of the slash is not an IPv4 or IPv6 address
             }
         } else {                                                            // It is NOT CIDR style
-            click_chatter("No CIDR style notation");
             was_written_in_CIDR_style = false;
             if (words_following_net.size() != 3) {
                 return NULL;                // It is not in CIDR style so 'net' must be followed by at least 3 arguments

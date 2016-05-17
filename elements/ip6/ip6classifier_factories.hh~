@@ -7,9 +7,9 @@
 #include <click/ip6address.hh>
 #include <click/etheraddress.hh>
 #include <click/args.hh>
-#include "ip6filtertokens_ip6.hh"
-#include "ip6filtertokens_ethernet.hh"
-#include "ip6filtertokens_tcp_udp.hh"
+#include "ip6classifier_tokens_ip6.hh"
+#include "ip6classifier_tokens_ethernet.hh"
+#include "ip6classifier_tokens_tcp_udp.hh"
 
 CLICK_DECLS
 

@@ -113,7 +113,15 @@ IP6Classifier::push(int, Packet *p)
                 for (int i = 0; i < _number_of_test_packets_to_be_sent; i++) {
                     average += ((_time_stamp_vector2[i].nsecval() - _time_stamp_vector[i].nsecval()));
                 }
-                click_chatter("the average = %i ", average / (int64_t) _number_of_packets_to_be_sent);
+                average = average / (int64_t) _number_of_test_packets_to_be_sent;
+                click_chatter("the average = %i ", average);
+                std::ofstream myfile2;
+                myfile2.open("average.txt");
+                myfile2 << average;
+                myfile2.close();
+                
+                // close program
+                exit(0);
             } else {
                 // Do nothing
                 // The performance test has been completed
@@ -147,7 +155,15 @@ IP6Classifier::push(int, Packet *p)
         for (int i = 0; i < _number_of_test_packets_to_be_sent; i++) {
             average += ((_time_stamp_vector2[i].nsecval() - _time_stamp_vector[i].nsecval()));
         }
-        click_chatter("the average = %i ", average / (int64_t) _number_of_packets_to_be_sent);
+        average = average / (int64_t) _number_of_test_packets_to_be_sent;
+        click_chatter("the average = %i ", average);
+        std::ofstream myfile2;
+        myfile2.open("average.txt");
+        myfile2 << average << " ";
+        myfile2.close();
+        
+        // close program
+        exit(0);
     } else {
         // Do nothing
         // The performance test has been completed
