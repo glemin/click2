@@ -15,15 +15,6 @@ CLICK_DECLS
 
 namespace ip6classification {
 /* for documentation see ip6filterlexer.cc */
-int skip_blanks(String to_be_lexed_string, int i);
-
-/* for documentation see ip6filterlexer.cc */
-int read_word(String to_be_lexed_string, int i, String& read_word);
-
-/* for documentation see ip6filterlexer.cc, note: this function throws an exception */
-void skip_blanks_and_read_word(String to_be_lexed_string, int& i, String& read_word, const String error);
-
-/* for documentation see ip6filterlexer.cc */
 int is_word_an_operator(String word, Operator& an_operator);
 
 /*
@@ -37,6 +28,9 @@ public:
     ~Lexer();
     int lex(Vector<Token*>& tokens, ErrorHandler *errh);
 private:
+    int skip_blanks(int i);
+    int read_word(int i, String& read_word);
+    void skip_blanks_and_read_word(int& i, String& word_to_be_read, const String error); 
     String to_be_lexed_string;
 };
 

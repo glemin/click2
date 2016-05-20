@@ -37,7 +37,7 @@ public:
             return new EtherHostPrimitiveToken(result3.data(), just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'host' is not an IPv4, IPv6 or Ethernet address.
+        throw String("host was followed by an unparsable argument '") + argument_of_host_keyword + String("'; it should be followed by an IPv6 or Ethernet address");
     }
 };
 
@@ -63,7 +63,7 @@ public:
             return new EtherSrcHostPrimitiveToken(result3.data(), just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'host' is not an IPv4, IPv6 or Ethernet address.
+        throw String("src host was followed by an unparsable argument '") + argument_of_src_host_keywords + String("'; it should be followed by an IPv6 or Ethernet address");
     }
 };
 
@@ -88,8 +88,7 @@ public:
         if (EtherAddressArg().parse(argument_of_dst_host_keywords, result3)) {
             return new EtherDstHostPrimitiveToken(result3.data(), just_seen_a_not_keyword, an_operator);
         }
-        
-        return NULL;    // An error occured, the argument following 'host' is not an IPv4, IPv6 or Ethernet address.    
+        throw String("dst host was followed by an unparsable argument '") + argument_of_dst_host_keywords + String("'; it should be followed by an IPv6 or Ethernet address");
     }
 };
 
@@ -102,8 +101,7 @@ public:
         if (int_arg->template parse<uint16_t>(argument_of_port_keyword, result)) {
             return new PortPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
-        
-        return NULL;    // An error occured, the argument following 'port' is not a valid integer.
+        throw String("port was followed by an unparsable argument '") + argument_of_port_keyword + String("'; it should be followed by an integer between 0 and 65535");
     }
 };
 
@@ -116,8 +114,7 @@ public:
         if (int_arg->template parse<uint16_t>(argument_of_port_keyword, result)) {
             return new SrcPortPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
-        
-        return NULL;    // An error occured, the argument following 'src port' is not a valid integer.
+        throw String("src port was followed by an unparsable argument '") + argument_of_port_keyword + String("'; it should be followed by an integer between 0 and 65535");
     }
 };
 
@@ -131,7 +128,7 @@ public:
             return new DstPortPrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
         
-        return NULL;    // An error occured, the argument following 'dst port' is not a valid integer.
+        throw String("dst port was followed by an unparsable argument '") + argument_of_port_keyword + String("'; it should be followed by an integer between 0 and 65535");
     }
 };
 
@@ -144,8 +141,7 @@ public:
         if (int_arg->template parse<uint8_t>(argument_of_icmp_type_keyword, result)) {
             return new ICMPTypePrimitiveToken(result, just_seen_a_not_keyword, an_operator);
         }
-        
-        return NULL;    // An error occured, the argument following 'icmp type' is not a valid integer.        
+        throw String("icmp type was followed by the unparsable argument '") + argument_of_icmp_type_keyword + String("', it must be followed by an integer between 0 and 255");
     }
 };
 

@@ -11,10 +11,9 @@
 #include "ip6classifier_tokens_tcp.hh"
 #include "ip6classifier_tokens_tcp_udp.hh"
 #include "ip6classifier_factories.hh"
-#include "ip6classifier_operator.hh"
 CLICK_DECLS
 
-namespace ip6classifier {
+namespace ip6classification {
 /* for documentation see ip6filterlexer.cc */
 int skip_blanks(String to_be_lexed_string, int i);
 
