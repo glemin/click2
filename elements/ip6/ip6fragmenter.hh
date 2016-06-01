@@ -2,6 +2,8 @@
 #define CLICK_IP6FRAGMENTER_HH
 #include <click/element.hh>
 #include <click/glue.hh>
+#include <clicknet/ip6.h>
+
 CLICK_DECLS
 
 /*
@@ -34,7 +36,7 @@ CLICK_DECLS
 
 class IP6Fragmenter : public Element {
 
-  uint32_t _mtu;        // maximum transmission unit; (technical detail: we have chosen to take uint32_t as its type because it compares easily with p->length())
+  uint32_t _MTU;        // maximum transmission unit; (technical detail: we have chosen to take uint32_t as its type because it compares easily with p->length())
   uint32_t _fragment_size;  // size of each fragment sent over the network
   
   int _drops;
@@ -44,6 +46,8 @@ class IP6Fragmenter : public Element {
   //int optcopy(const click_ip6 *ip1, click_ip6 *ip2);
   
   uint32_t _id; // current fragmentation ID
+  
+  uint32_t size_of_IPv6_part(click_ip6* packet);
 
  public:
 

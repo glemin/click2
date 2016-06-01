@@ -27,7 +27,7 @@ IP6Fragmenter::IP6Fragmenter()
   : _drops(0)
 {
   _fragments = 0;
-  _mtu = 0;
+  _MTU = 0;
 }
 
 IP6Fragmenter::~IP6Fragmenter()
@@ -38,7 +38,16 @@ IP6Fragmenter::~IP6Fragmenter()
 int
 IP6Fragmenter::configure(Vector<String> &conf, ErrorHandler *errh)
 {
-    return Args(conf, this, errh).read_mp("MTU", _mtu).complete();
+    int return_value = Args(conf, this, errh).read_mp("MTU", _MTU).complete();
+    // Determine the fragmentation size now in bytes.
+    // This fragmentation size must be a multiple of 8 bytes according to the RFC.
+    
+    if ((_MTU / 8) != 0) {
+        _fragment_size = _MTU - (_MTU / 8);     // The size we say an individual fragment will have,
+                                                // it is the nearest multiple of 8 of the MTU lower than the MTU
+    }
+    
+    click_chatter("de return value is %i", return_value);
 }
 
  /*
@@ -124,18 +133,68 @@ IP6Fragmenter::add_handlers()
   add_read_handler("fragments", IP6Fragmenter_read_fragments, 0);
 }
 
-
-
+uint32_t
+IP6Fragmenter::size_of_IPv6_part(click_ip6* p) {
+    uint32_t size_of_IPv6_part = 40;    // size of the standard IPv6 part
+    uint8_t nxt = p->ip6_nxt;
+    while (nxt == 0 || nxt == 43 || nxt == 60) {
+	    if (nxt == 43) {
+	        nxt = ((click_ip6_rthdr *) p)->ip6r_nxt;
+	        // move the packet pointer
+	        p = (click_ip6*) ((click_ip6_rthdr *) p + (uint32_t) (((click_ip6_rthdr *) p)->ip6r_len));
+	        
+	        size_of_IPv6_part += ((click_ip6_rthdr *) p)->ip6r_len;   // increase the total size of the IPv6 part
+	    } else if (nxt == 60) {
+	        nxt = ((click_ip6_dest *) p)->ip6d_nxt;
+	        // move the packet pointer
+	        p = (click_ip6*) ((click_ip6_dest *) p + (uint32_t) (((click_ip6_dest *) p)->ip6d_len));
+	        
+	        size_of_IPv6_part += ((click_ip6_dest *) p)->ip6d_len;   // increase the total size of the IPv6 part
+	    } else if (nxt == 0) {
+            nxt = ((click_ip6_hbh *) p)->ip6h_nxt;
+	        // move the packet pointer
+	        p = (click_ip6*) ((click_ip6_hbh *) p + (uint32_t) (((click_ip6_hbh *) p)->ip6h_len));
+	        
+	        size_of_IPv6_part += ((click_ip6_hbh *) p)->ip6h_len;   // increase the total size of the IPv6 part
+	    } else {
+	        break;  // quit the while loop
+	    }
+    }
+    return size_of_IPv6_part;
+}
 
 void
 IP6Fragmenter::push(int, Packet *p)
 {
   // click_chatter("IP6Fragmenter::push, packet length is %x \n", p->length());
+    click_ip6 original_packets_ipv6_header = *(click_ip6*)p;
+    original_packets_ipv6_header.ip6_nxt = 44;  // fragmentation header
 
-    if (p->length() <= _mtu) {
+    if (p->length() <= _MTU) {
         // click_chatter("**********************1");
         output(0).push(p);
     } else {
+        uint32_t length_of_IPv6_protocol = size_of_IPv6_part((click_ip6*) p);   // How long is the IPv6 part (standard header +
+                                                                                // extension headers).
+        for (int i = 1; i <= p->length() / (_fragment_size - length_of_IPv6_protocol); i++) {
+    	    click_ip6 *packet = (click_ip6*) Packet::make(0, _fragment_size);
+    	    *packet = original_packets_ipv6_header;
+    	    ((click_ip6_fragment*) (packet+1))->ip6_frag_nxt = 44;  // Fragmentation Header
+    	    ((click_ip6_fragment*) (packet+1))->ip6_frag_reserved = 0;
+    	    ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (i-1) * _fragment_size;
+            if (i != p->length() / (_MTU - length_of_IPv6_protocol)) {
+                // more fragments 0
+        	    ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (i-1) * _fragment_size;
+    	    //    ((click_ip6_fragment*) (packet+1))->ip6_frag_nxt = 44;  // Fragmentation Header
+            } else {
+                // more fragments 1
+        	    ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (i-1) * _fragment_size;
+            //    ip6_frag_id
+            }
+        }
+
+        click_chatter("%u", size);
+        click_chatter("done");
       // click_chatter("**********************2");
       // output(0).push(p);
     }
