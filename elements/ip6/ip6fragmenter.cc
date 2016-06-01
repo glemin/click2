@@ -1,6 +1,5 @@
 /*
  * ip6fragmenter.{cc,hh} -- element fragments IP6 packets
- * Robert Morris
  *
  * Copyright (c) 1999 Massachusetts Institute of Technology
  *
@@ -39,15 +38,18 @@ int
 IP6Fragmenter::configure(Vector<String> &conf, ErrorHandler *errh)
 {
     int return_value = Args(conf, this, errh).read_mp("MTU", _MTU).complete();
+    
     // Determine the fragmentation size now in bytes.
     // This fragmentation size must be a multiple of 8 bytes according to the RFC.
-    
-    if ((_MTU / 8) != 0) {
-        _fragment_size = _MTU - (_MTU / 8);     // The size we say an individual fragment will have,
-                                                // it is the nearest multiple of 8 of the MTU lower than the MTU
+    if (return_value == 0) {
+        _fragment_size = _MTU - (_MTU % 8);     // The size we say an individual fragment will have,
+                                                // it is the nearest multiple of 8 of the MTU lower than the MTU.
+                                                // In the special case of it being a multiple of 8 _fragment_size = _MTU - 0, or just the _MTU.
+        return 0;
+    } else {
+        return return_value;                    // A parse error occured
     }
-    
-    click_chatter("de return value is %i", return_value);
+
 }
 
  /*
@@ -168,32 +170,47 @@ IP6Fragmenter::push(int, Packet *p)
 {
   // click_chatter("IP6Fragmenter::push, packet length is %x \n", p->length());
     click_ip6 original_packets_ipv6_header = *(click_ip6*)p;
-    original_packets_ipv6_header.ip6_nxt = 44;  // fragmentation header
 
     if (p->length() <= _MTU) {
         // click_chatter("**********************1");
         output(0).push(p);
     } else {
-        uint32_t length_of_IPv6_protocol = size_of_IPv6_part((click_ip6*) p);   // How long is the IPv6 part (standard header +
-                                                                                // extension headers).
-        for (int i = 1; i <= p->length() / (_fragment_size - length_of_IPv6_protocol); i++) {
+        uint32_t total_length_of_all_IPV6_headers = size_of_IPv6_part((click_ip6*) p);   // How long is the IPv6 part (standard header +
+                                                                                         // extension headers).
+        click_chatter("# fragments = %i", (p->length() / (_fragment_size - total_length_of_all_IPV6_headers)) + 1);
+        Vector<click_ip6*> fragmented_packets_list;                                      // List contains the newly created fragmented packets
+        for (int i = 1; i <= (p->length() / (_fragment_size - total_length_of_all_IPV6_headers)) + 1; i++) {
     	    click_ip6 *packet = (click_ip6*) Packet::make(0, _fragment_size);
     	    *packet = original_packets_ipv6_header;
-    	    ((click_ip6_fragment*) (packet+1))->ip6_frag_nxt = 44;  // Fragmentation Header
+    	    packet->ip6_nxt = 44;   // Next header set to "Fragmentation Header" (protocol number 44)
+    	    ((click_ip6_fragment*) (packet+1))->ip6_frag_nxt = original_packets_ipv6_header.ip6_nxt;  // Next header set to the IPv6 packets
+    	                                                                                              // original header
     	    ((click_ip6_fragment*) (packet+1))->ip6_frag_reserved = 0;
-    	    ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (i-1) * _fragment_size;
-            if (i != p->length() / (_MTU - length_of_IPv6_protocol)) {
-                // more fragments 0
-        	    ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (i-1) * _fragment_size;
-    	    //    ((click_ip6_fragment*) (packet+1))->ip6_frag_nxt = 44;  // Fragmentation Header
+
+            if (i != p->length() / (_MTU - total_length_of_all_IPV6_headers)) {
+                // more fragments must be set to 0
+                
+                // put the correct offset in positions 0-12, and get a 0 in the last spot and keep all other 
+    	        // characters by &'ing with 0b111111111111110
+    	        ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (((i-1) * (_fragment_size/8)) << 3) & 0b1111111111111110;
             } else {
-                // more fragments 1
-        	    ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (i-1) * _fragment_size;
-            //    ip6_frag_id
+                // more fragments must be set to 1
+                
+                // put the correct offset in positions 0-12, and get a 0 in the last spot and keep all other 
+    	        // characters by |'ing with 0b0000000000000001
+    	        ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (((i-1) * (_fragment_size/8)) << 3) | 0b0000000000000001;
             }
+            fragmented_packets_list.push_back(packet);
+        }
+        
+        // packets first get captured and stored in a list before being pushed on the network
+        // reasoning behind it is that calling a network driver might be expensive and when all
+        // packets are close to eachother this might improve the performance 
+        for (int i = 0; i < fragmented_packets_list.size(); i++) {
+            output(0).push((Packet*) fragmented_packets_list[0]);
         }
 
-        click_chatter("%u", size);
+        click_chatter("%u", total_length_of_all_IPV6_headers);
         click_chatter("done");
       // click_chatter("**********************2");
       // output(0).push(p);
