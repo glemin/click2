@@ -50,7 +50,7 @@ MarkIP6Header::list_contains_value(Vector<uint8_t> list, uint8_t nxt) {
 
 Packet *
 MarkIP6Header::simple_action(Packet *p)
-{
+{/*
     click_chatter("enter MarkIP6Header");
     const click_ip6 *ip6 = reinterpret_cast<const click_ip6 *>(p->data() + _offset);
     p->set_ip6_header(ip6); // it sets the ip6 header which is 40 bytes long
@@ -125,6 +125,7 @@ MarkIP6Header::simple_action(Packet *p)
     } else if (ip6->ip6_ctlun.ip6_un1.ip6_un1_nxt == 135) { // mobility header
 //        click_ip6_mobility ip6_mobility = (click_ip6_mobility) ip6 + 1;
     }
+    */
     return p;
 }
 
