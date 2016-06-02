@@ -20,6 +20,7 @@
 #include <click/args.hh>
 #include <click/error.hh>
 #include <click/glue.hh>
+#include <clicknet/ether.h>
 CLICK_DECLS
 
 IP6Fragmenter::IP6Fragmenter()
@@ -37,18 +38,20 @@ IP6Fragmenter::~IP6Fragmenter()
 int
 IP6Fragmenter::configure(Vector<String> &conf, ErrorHandler *errh)
 {
-    int return_value = Args(conf, this, errh).read_mp("MTU", _MTU).complete();
+    return Args(conf, this, errh).read_mp("MTU", _MTU).complete();
     
-    // Determine the fragmentation size now in bytes.
+/*    // Determine the fragmentation size now in bytes.
     // This fragmentation size must be a multiple of 8 bytes according to the RFC.
     if (return_value == 0) {
         _fragment_size = _MTU - (_MTU % 8);     // The size we say an individual fragment will have,
-                                                // it is the nearest multiple of 8 of the MTU lower than the MTU.
-                                                // In the special case of it being a multiple of 8 _fragment_size = _MTU - 0, or just the _MTU.
+                                                      // it is the nearest multiple of 8 of the MTU lower than the MTU.
+                                                      // In the special case of it being a multiple of 8 _fragment_size = _MTU - 0, or just the _MTU.
+                                                      // This size contains both the IPv6 headers and the size of the payload
         return 0;
     } else {
-        return return_value;                    // A parse error occured
+        return return_value;                          // A parse error occured
     }
+*/
 
 }
 
@@ -138,7 +141,10 @@ IP6Fragmenter::add_handlers()
 uint32_t
 IP6Fragmenter::size_of_IPv6_part(click_ip6* p) {
     uint32_t size_of_IPv6_part = 40;    // size of the standard IPv6 part
+    click_chatter("before nxt");
     uint8_t nxt = p->ip6_nxt;
+    click_chatter("after nxt");
+    click_chatter("next = %u", nxt);
     while (nxt == 0 || nxt == 43 || nxt == 60) {
 	    if (nxt == 43) {
 	        nxt = ((click_ip6_rthdr *) p)->ip6r_nxt;
@@ -175,12 +181,26 @@ IP6Fragmenter::push(int, Packet *p)
         // click_chatter("**********************1");
         output(0).push(p);
     } else {
+        // Determine Length Taken by all IPV6 Headers
         uint32_t total_length_of_all_IPV6_headers = size_of_IPv6_part((click_ip6*) p);   // How long is the IPv6 part (standard header +
                                                                                          // extension headers).
-        click_chatter("# fragments = %i", (p->length() / (_fragment_size - total_length_of_all_IPV6_headers)) + 1);
-        Vector<click_ip6*> fragmented_packets_list;                                      // List contains the newly created fragmented packets
-        for (int i = 1; i <= (p->length() / (_fragment_size - total_length_of_all_IPV6_headers)) + 1; i++) {
-    	    click_ip6 *packet = (click_ip6*) Packet::make(0, _fragment_size);
+        
+        // The size of each fragment is the nearest multiple of 8 of (_MTU - header_size).
+        // We find this multiple by subtracting the module by 8 of it
+        // In the special case of it being exactly a multiple of 8 we get fragment_size = (_MTU - total_length_of_all_IPV6_header) - 0
+        //                                                                              = (_MTU - total_length_of_all_IPV6_header)
+        // The reason why we need to round it to multiple of 8 is because the offset Fragmentation field expects us to tell how much
+        // multiples of 8 we are away from the start (i.e. from the start of the payload)
+        uint32_t fragment_size = (_MTU - total_length_of_all_IPV6_headers) - ((_MTU - total_length_of_all_IPV6_headers) % 8);
+        
+        Vector<click_ip6*> fragmented_packets_list;
+        // (p->length() - total_length_of_all_IPV6_headers) is the total amount of data that must be redistributed over multiple packets
+        // It contains exactly the payload field
+        for (int i = 1; i <= ((p->length() - total_length_of_all_IPV6_headers) / fragment_size) + 1; i++) { // i represents the current
+                                                                                                            // fragmentation packet number
+                                                                                  
+    	    click_ip6 *packet = (click_ip6*) Packet::make(sizeof(click_ether), 0, _fragment_size + total_length_of_all_IPV6_headers, 0);
+    	    
     	    *packet = original_packets_ipv6_header;
     	    packet->ip6_nxt = 44;   // Next header set to "Fragmentation Header" (protocol number 44)
     	    ((click_ip6_fragment*) (packet+1))->ip6_frag_nxt = original_packets_ipv6_header.ip6_nxt;  // Next header set to the IPv6 packets
@@ -192,14 +212,19 @@ IP6Fragmenter::push(int, Packet *p)
                 
                 // put the correct offset in positions 0-12, and get a 0 in the last spot and keep all other 
     	        // characters by &'ing with 0b111111111111110
-    	        ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (((i-1) * (_fragment_size/8)) << 3) & 0b1111111111111110;
+    	        ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (((i-1) * (fragment_size/8)) << 3) & 0b1111111111111110;
             } else {
                 // more fragments must be set to 1
                 
                 // put the correct offset in positions 0-12, and get a 0 in the last spot and keep all other 
     	        // characters by |'ing with 0b0000000000000001
-    	        ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (((i-1) * (_fragment_size/8)) << 3) | 0b0000000000000001;
+    	        ((click_ip6_fragment*) (packet+1))->ip6_frag_offset = (((i-1) * (fragment_size/8)) << 3) | 0b0000000000000001;
             }
+            // Now copy the data
+            packet = packet + 2;            
+            packet = (click_ip6*) ((uint8_t*) p + (i * (fragment_size/ 8)));
+            
+            // Now add the packet to the list of to be sended packets
             fragmented_packets_list.push_back(packet);
         }
         
@@ -207,7 +232,12 @@ IP6Fragmenter::push(int, Packet *p)
         // reasoning behind it is that calling a network driver might be expensive and when all
         // packets are close to eachother this might improve the performance 
         for (int i = 0; i < fragmented_packets_list.size(); i++) {
-            output(0).push((Packet*) fragmented_packets_list[0]);
+            for (int i = 0; i < fragmented_packets_list[i].size(); i++) {
+                click_chatter("byte");
+            }
+            click_chatter("push this packet");
+            output(0).push((Packet*) fragmented_packets_list[i]);
+            click_chatter("packet pushed");
         }
 
         click_chatter("%u", total_length_of_all_IPV6_headers);
