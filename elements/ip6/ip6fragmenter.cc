@@ -138,13 +138,13 @@ IP6Fragmenter::add_handlers()
   add_read_handler("fragments", IP6Fragmenter_read_fragments, 0);
 }
 
+// Updates the nxt field of the last IPv6 Header so it indicates 44 (= fragmentation header)
+// Returns the size of the IPv6 part as well as the last "nxt value" of the last IPv6 header
+// in the chain. This "nxt value" will be the value used in the IPv6 Extension Header.
 uint32_t
-IP6Fragmenter::size_of_IPv6_part(click_ip6* p) {
+IP6Fragmenter::size_of_IPv6_part_and_update_chain(click_ip6* p, uint8_t& nxt) {
     uint32_t size_of_IPv6_part = 40;    // size of the standard IPv6 part
-    click_chatter("before nxt");
-    uint8_t nxt = p->ip6_nxt;
-    click_chatter("after nxt");
-    click_chatter("next = %u", nxt);
+    nxt = p->ip6_nxt;
     while (nxt == 0 || nxt == 43 || nxt == 60) {
 	    if (nxt == 43) {
 	        nxt = ((click_ip6_rthdr *) p)->ip6r_nxt;
@@ -168,22 +168,48 @@ IP6Fragmenter::size_of_IPv6_part(click_ip6* p) {
 	        break;  // quit the while loop
 	    }
     }
+    (click_ip6_hbh*) p->ip6h_nxt = 44;      // fragmentation header
+    
     return size_of_IPv6_part;
 }
 
 void
 IP6Fragmenter::push(int, Packet *p)
 {
-  // click_chatter("IP6Fragmenter::push, packet length is %x \n", p->length());
-    click_ip6 original_packets_ipv6_header = *(click_ip6*)p;
-
     if (p->length() <= _MTU) {
         // click_chatter("**********************1");
         output(0).push(p);
     } else {
-        // Determine Length Taken by all IPV6 Headers
-        uint32_t total_length_of_all_IPV6_headers = size_of_IPv6_part((click_ip6*) p);   // How long is the IPv6 part (standard header +
-                                                                                         // extension headers).
+        uint8_t nxt;
+        uint32_t size_of_IPv6_headers = size_of_IPv6_part((click_ip6*) p, nxt);      // How long is the IPv6 part (standard header +
+                                                                                     // extension headers).
+                                                                                     // Also updates the IPv6 part so the nxt header fields
+                                                                                     // are renewed.
+                                                                                     // nxt is a value later used to indicate which
+                                                                                     // non-IPv6 protocol follows the IPv6 protocol chain.
+        void* IPv6_headers_copy;
+        memcpy(IPv6_headers_copy, p->data(), size_of_IPv6_headers);                  // size of IPv6 headers bytes will be copied
+        
+        uint32_t size_of_data_part = _MTU - size_of_IPv6_headers;
+        size_of_data_part -= (_MTU - size_of_IPv6_headers) % 8;                 // subtract the remainder to make it a multiple of 8 bytes
+        
+        uint32_t size_of_big_payload = p->length() - size_of_IPv6_headers;      // size of big payload to be distributed over small fragments
+        
+        for (int i = 1; (size_of_big_payload / size_of_data_part) + 1; i++) {
+            WriteablePacket *packet = Packet::make(0, size_of_data_part);
+            
+            (void*) ip6_packet = (void*) packet->data();
+            memcpy(ip6_packet, IPv6_headers_copy, size_of_IPv6_headers)
+            
+            click_ip6_fragment* ip6_frag_header = (uint8_t*) ip6_packet + size_of_IPv6_headers;
+            ip6_frag_header->ip6_frag_nxt = .ip6_nxt;
+            if (i != (size_of_big_payload / size_of_data_part) + 1) {
+    	        ip6_frag_header->ip6_frag_offset = ((((i-1) * (size_of_data_part/8)) << 3) & 0b1111111111111110);            
+            } else {
+                ip6_frag_header->ip6_frag_offset = ((((i-1) * (size_of_data_part/8)) << 3) | 0b0000000000000001);
+            }
+        }
+        
         
         // The size of each fragment is the nearest multiple of 8 of (_MTU - header_size).
         // We find this multiple by subtracting the module by 8 of it
