@@ -189,17 +189,18 @@ IP6Fragmenter::push(int, Packet *p)
                                                                                      // nxt is a value later used to indicate which
                                                                                      // non-IPv6 protocol follows the IPv6 protocol chain.
                          
-        void* IPv6_headers_copy;
+        void* IPv6_headers_copy = malloc(size_of_IPv6_headers);
+        click_chatter("p->length() = %u", p->length());
         memcpy(IPv6_headers_copy, p->data(), size_of_IPv6_headers);                  // size of IPv6 headers bytes will be copied
         
         uint8_t* IPv6_payload = (uint8_t*) p->data() + size_of_IPv6_headers;
         
-        uint32_t size_of_data_part = _MTU - size_of_IPv6_headers;
-        size_of_data_part -= (_MTU - size_of_IPv6_headers) % 8;                 // subtract the remainder to make it a multiple of 8 bytes
+        uint32_t size_of_data_part = _MTU - size_of_IPv6_headers - sizeof(click_ip6_fragment);
+        size_of_data_part -= (_MTU - size_of_IPv6_headers - sizeof(click_ip6_fragment)) % 8;                 // subtract the remainder to make it a multiple of 8 bytes
         
         uint32_t size_of_big_payload = p->length() - size_of_IPv6_headers;      // size of big payload to be distributed over small fragments
         
-        for (int i = 1; (size_of_big_payload / size_of_data_part) + 1; i++) {
+        for (int i = 1; i <= (size_of_big_payload / size_of_data_part) + 1; i++) {
             WritablePacket *packet = Packet::make(0, size_of_data_part);
             
             void* ip6_packet = (void*) packet->data();
@@ -214,9 +215,10 @@ IP6Fragmenter::push(int, Packet *p)
             }
             
             uint8_t* ip6_data = (uint8_t*) (ip6_frag_header + 1);
-            memcpy(ip6_data, IPv6_payload + ((i-1) * size_of_data_part), size_of_data_part);
+            memcpy(ip6_data, IPv6_payload + ((i-1) * size_of_data_part), size_of_data_part - sizeof(click_ip6_fragment)); // TODO only 24 bytes off at the moment
             output(0).push(packet);
         }
+        click_chatter("done");
     }
 }
 
