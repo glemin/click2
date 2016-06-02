@@ -47,7 +47,7 @@ class IP6Fragmenter : public Element {
   
   uint32_t _id; // current fragmentation ID
   
-  uint32_t size_of_IPv6_part(click_ip6* packet);
+  uint32_t size_of_IPv6_part_and_update_chain(click_ip6* p, uint8_t& nxt);
 
  public:
 

@@ -202,18 +202,18 @@ IP6Fragmenter::push(int, Packet *p)
         for (int i = 1; (size_of_big_payload / size_of_data_part) + 1; i++) {
             WritablePacket *packet = Packet::make(0, size_of_data_part);
             
-            (void*) ip6_packet = (void*) packet->data();
-            memcpy(ip6_packet, IPv6_headers_copy, size_of_IPv6_headers)
+            void* ip6_packet = (void*) packet->data();
+            memcpy(ip6_packet, IPv6_headers_copy, size_of_IPv6_headers);
             
-            click_ip6_fragment* ip6_frag_header = (uint8_t*) ip6_packet + size_of_IPv6_headers;
-            ip6_frag_header->ip6_frag_nxt = .ip6_nxt;
+            click_ip6_fragment* ip6_frag_header = (click_ip6_fragment*) ((uint8_t*) ip6_packet + size_of_IPv6_headers);
+            ip6_frag_header->ip6_frag_nxt = nxt;    // The Next Header value that identifies the first header of the Fragmentable Part of the original packet.
             if (i != (size_of_big_payload / size_of_data_part) + 1) {
     	        ip6_frag_header->ip6_frag_offset = ((((i-1) * (size_of_data_part/8)) << 3) & 0b1111111111111110);            
             } else {
                 ip6_frag_header->ip6_frag_offset = ((((i-1) * (size_of_data_part/8)) << 3) | 0b0000000000000001);
             }
             
-            (uint8_t*) ip6_data = ip6_frag_header + 1;
+            uint8_t* ip6_data = (uint8_t*) (ip6_frag_header + 1);
             memcpy(ip6_data, IPv6_payload + ((i-1) * size_of_data_part), size_of_data_part);
             output(0).push(packet);
         }
