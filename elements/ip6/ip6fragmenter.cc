@@ -193,7 +193,10 @@ IP6Fragmenter::push(int, Packet *p)
         
         // === SENDING PACKETS ===
         // Packets that have a size that is a multiple of 8 bytes
-        for (unsigned i = 1; i <= (fragmentable_part_length / (non_last_fragment_length + sizeof(click_ip6_fragment))); i++) {     
+        click_chatter("fragmentable_part_length = %u", fragmentable_part_length);
+        click_chatter("non_last_fragment_length = %u", non_last_fragment_length);
+        click_chatter("fragmentable_part_length / non_last_fragment_length = %u", fragmentable_part_length / non_last_fragment_length);
+        for (unsigned i = 1; i <= (fragmentable_part_length / non_last_fragment_length); i++) {
             WritablePacket *packet = Packet::make(0, unfragmentable_part_length + sizeof(click_ip6_fragment) + non_last_fragment_length);
             
             // Add unfragmentable part
@@ -206,15 +209,32 @@ IP6Fragmenter::push(int, Packet *p)
             ip6_frag_header->ip6_frag_id = _id;
             
             // Add 'i'-th fragment
-            memcpy(ip6_frag_header + 1, fragmentable_part_ptr + ((i-1) * (non_last_fragment_length)), non_last_fragment_length+ 5);
+            memcpy(ip6_frag_header + 1, fragmentable_part_ptr + ((i-1) * (non_last_fragment_length)), non_last_fragment_length);
             
             output(0).push(packet);
         }
         // Possibly the last packet that might not be a multiple of 8 bytes
-
-
-        
-        
+        if (uint32_t remainder = (fragmentable_part_length % non_last_fragment_length)) {
+            click_chatter("remainder = %u", remainder);
+            WritablePacket *packet = Packet::make(0, unfragmentable_part_length + sizeof(click_ip6_fragment) + remainder);
+            
+            // Adapt length in original packet header
+            ((click_ip6*) p->data())->ip6_plen = htons((unfragmentable_part_length - 40) + sizeof(click_ip6_fragment) + remainder);
+            
+            // Add unfragmentable part
+            memcpy((void*) packet->data(), p->data(), unfragmentable_part_length);
+            
+            // Add fragment header
+            click_ip6_fragment* ip6_frag_header = (click_ip6_fragment*) ((uint8_t*) packet->data() + unfragmentable_part_length);
+            ip6_frag_header->ip6_frag_nxt = nxt; // The Next Header value that identifies the first header of the Fragmentable Part of the original packet.
+            ip6_frag_header->ip6_frag_offset = htons(((((fragmentable_part_length / (non_last_fragment_length + sizeof(click_ip6_fragment))) * (non_last_fragment_length/8)) << 3) & 0b1111111111111000));
+            ip6_frag_header->ip6_frag_id = _id;
+            
+            // Add last fragment
+            memcpy(ip6_frag_header + 1, fragmentable_part_ptr + ((fragmentable_part_length / (non_last_fragment_length + sizeof(click_ip6_fragment))) * (non_last_fragment_length)), remainder);
+            
+            output(0).push(packet);            
+        }
         
         _id ++;
     }
