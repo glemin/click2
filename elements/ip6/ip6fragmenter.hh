@@ -36,7 +36,9 @@ CLICK_DECLS
 
 class IP6Fragmenter : public Element {
 
-  uint32_t _MTU;        // maximum transmission unit; (technical detail: we have chosen to take uint32_t as its type because it compares easily with p->length())
+  uint32_t _MTU;        // maximum transmission unit; this is the maximum payload the layer 2 protocol we use can handle;
+                        // in case of IPv6 we need to choose the _MTU so it is equal to the minimal MTU of all MTU's on the path
+                        // to the destination
   uint32_t _fragment_size;  // size of each fragment sent over the network
   
   int _drops;
@@ -47,7 +49,7 @@ class IP6Fragmenter : public Element {
   
   uint32_t _id; // current fragmentation ID
   
-  uint32_t size_of_IPv6_part_and_update_chain(click_ip6* p, uint8_t& nxt);
+  uint32_t get_length_of_and_update_unfragmentable_part(click_ip6* p, uint8_t& nxt);
 
  public:
 
