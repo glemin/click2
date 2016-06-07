@@ -1,5 +1,6 @@
 /*
  * ip6fragmenter.{cc,hh} -- element fragments IP6 packets
+ * Glenn Minne
  *
  * Copyright (c) 1999 Massachusetts Institute of Technology
  *
@@ -48,20 +49,6 @@ IP6Fragmenter::configure(Vector<String> &conf, ErrorHandler *errh)
     } else {
         return return_type;
     }
-    
-/*    // Determine the fragmentation size now in bytes.
-    // This fragmentation size must be a multiple of 8 bytes according to the RFC.
-    if (return_value == 0) {
-        _fragment_size = _MTU - (_MTU % 8);     // The size we say an individual fragment will have,
-                                                      // it is the nearest multiple of 8 of the MTU lower than the MTU.
-                                                      // In the special case of it being a multiple of 8 _fragment_size = _MTU - 0, or just the _MTU.
-                                                      // This size contains both the IPv6 headers and the size of the payload
-        return 0;
-    } else {
-        return return_value;                          // A parse error occured
-    }
-*/
-
 }
 
 void
@@ -174,7 +161,6 @@ void
 IP6Fragmenter::push(int, Packet *p)
 {
     if (p->length() <= _MTU) {
-        // click_chatter("**********************1");
         output(0).push(p);
     } else {
         // === SETUP ===
@@ -186,16 +172,11 @@ IP6Fragmenter::push(int, Packet *p)
         uint8_t* fragmentable_part_ptr = (uint8_t*) p->data() + unfragmentable_part_length;
         uint32_t fragmentable_part_length = p->length() - unfragmentable_part_length;      // size of big payload to be distributed over small fragments
         uint32_t non_last_fragment_length = _MTU - unfragmentable_part_length - sizeof(click_ip6_fragment);
-        click_chatter("non_last_fragment_length = %u", non_last_fragment_length);
         non_last_fragment_length  -= (_MTU - unfragmentable_part_length - sizeof(click_ip6_fragment)) % 8; // round down to multiple of 8 bytes
-        click_chatter("rounded(non_last_fragment_length) = %u", non_last_fragment_length);
         ((click_ip6*) p->data())->ip6_plen = htons((unfragmentable_part_length - 40) + sizeof(click_ip6_fragment) + non_last_fragment_length);
         
         // === SENDING PACKETS ===
         // Packets that have a size that is a multiple of 8 bytes
-        click_chatter("fragmentable_part_length = %u", fragmentable_part_length);
-        click_chatter("non_last_fragment_length = %u", non_last_fragment_length);
-        click_chatter("fragmentable_part_length / non_last_fragment_length = %u", fragmentable_part_length / non_last_fragment_length);
         for (unsigned i = 1; i <= (fragmentable_part_length / non_last_fragment_length); i++) {
             WritablePacket *packet = Packet::make(0, unfragmentable_part_length + sizeof(click_ip6_fragment) + non_last_fragment_length);
             
@@ -215,7 +196,6 @@ IP6Fragmenter::push(int, Packet *p)
         }
         // Possibly the last packet that might not be a multiple of 8 bytes
         if (uint32_t remainder = (fragmentable_part_length % non_last_fragment_length)) {
-            click_chatter("remainder = %u", remainder);
             WritablePacket *packet = Packet::make(0, unfragmentable_part_length + sizeof(click_ip6_fragment) + remainder);
             
             // Adapt length in original packet header

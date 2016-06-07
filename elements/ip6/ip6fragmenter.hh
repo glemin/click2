@@ -14,24 +14,17 @@ CLICK_DECLS
  * =d
  * Expects IP6 packets as input.
  * If the IP6 packet size is <= mtu, just emits the packet on output 0.
- * If the size is greater than mtu and DF isn't set, splits into
- * fragments emitted on output 0.
- * If DF is set and size is greater than mtu, sends to output 1.
- *
- * Ordinarily output 1 is connected to an ICMP6Error packet generator
- * with type 3 (UNREACH) and code 4 (NEEDFRAG).
- *
- * Only the mac_broadcast annotation is copied into the fragments.
- *
- * Sends the first fragment last.
+ * If the size is greater than mtu, splits into fragments emitted on 
+ * output 0.
  *
  * =e
  * Example:
  *
- *   ... -> fr::IP6Fragmenter -> Queue(20) -> ...
- *   fr[1] -> ICMP6Error(18.26.4.24, 3, 4) -> ...
- *
- * =a ICMP6Error, CheckLength
+ * InfiniteSource(LIMIT 1, LENGTH 6000)
+ * -> UDPIP6Encap(fa80::0202:b3ff:fe1e:8329, 1200, f880::0202:b3ff:fe1e:0002, 1201)
+ * -> IP6Fragmenter(MTU 1400)          // 0, 1952
+ * -> EtherEncap(0x86dd, 00:0a:95:9d:68:16, 00:0a:95:9d:68:17)
+ * -> Discard;
  */
 
 class IP6Fragmenter : public Element {
