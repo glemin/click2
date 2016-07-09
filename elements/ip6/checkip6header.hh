@@ -2,6 +2,7 @@
 #define CLICK_CHECKIP6HEADER_HH
 #include <click/element.hh>
 #include <click/glue.hh>
+#include <clicknet/ip6.h>
 CLICK_DECLS
 
 /*
@@ -67,7 +68,13 @@ class CheckIP6Header : public Element {
   Packet *simple_action(Packet *);
   void drop_it(Packet *);
 
-
+ private:
+   void check_hbh(click_ip6_hbh *hbh_header, unsigned remaining_packet_length);
+   void check_dest(click_ip6_dest *dest_header, unsigned remaining_packet_length);
+   void check_rthdr(click_ip6_rthdr *rthdr_header, unsigned remaining_packet_length);
+   void check_fragment(click_ip6_fragment *fragment_header, unsigned remaining_packet_length);
+   inline Packet *generate_icmp6_parameter_problem(unsigned offset);
+   Packet* create_parameter_problem_message(uint8_t* packet_content, uint8_t* packet_content_end, uint8_t code, uint32_t pointer);
 };
 
 CLICK_ENDDECLS
