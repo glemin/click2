@@ -1,0 +1,33 @@
+   {
+     # --- ethernet header ---
+     0x00, 0x1b, 0x21, 0x3c, 0x9d, 0xf8,  # mac destination
+     0x90, 0xe2, 0xba, 0x0a, 0x56, 0xb4,  # mac source
+     const16(0x0800), # protocol
+     # --- ip header ---
+     # ipv4 version (4-bit) + ihl (4-bit), tos
+     0b01000101, 0,
+     # ipv4 total len
+     const16(40),
+     # id (note: runtime dynamic random)
+     drnd(2),
+     # ipv4 3-bit flags + 13-bit fragment offset
+     # 001 = more fragments
+     0b00100000, 0,
+     64, # ttl
+     17, # proto udp
+     # dynamic ip checksum (note: offsets are zero indexed)
+     csumip(14, 33),
+     192, 168, 51, 1, # source ip
+     192, 168, 51, 2, # dest ip
+     # --- udp header ---
+     # as this is a fragment the below stuff does not matter too much
+     const16(48054), # src port
+     const16(43514), # dst port
+     const16(20),    # udp length
+     # udp checksum can be dyn calc via csumudp(offset ip, offset tcp)
+     # which is csumudp(14, 34), but for udp its allowed to be zero
+     const16(0),
+     # payload
+     'A',  fill(0x41, 11),
+   }
+
