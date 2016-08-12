@@ -274,8 +274,9 @@ CheckIP6Header::add_handlers()
 inline Packet*
 CheckIP6Header::generate_icmp6_parameter_problem(unsigned offset) {
   return 0;   // TODO implement this
-  
 }
+
+
 
 Packet*
 CheckIP6Header::create_parameter_problem_message(uint8_t* packet_content, uint8_t* packet_content_end, uint8_t code, uint32_t pointer) {

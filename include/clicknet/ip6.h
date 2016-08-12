@@ -39,6 +39,7 @@ struct click_ip6 {
     } ip6_ctlun;
     struct in6_addr ip6_src;	/* 8-23	 source address */
     struct in6_addr ip6_dst;	/* 24-39 dest address */
+    
 };
 
 #define ip6_v			ip6_ctlun.ip6_un3.ip6_un3_v
@@ -123,6 +124,15 @@ uint16_t in6_cksum(const struct in6_addr *saddr,
 		   uint16_t ori_csum,
 		   unsigned char *addr,
 		   uint16_t len2);
+		   
+/**
+ * @brief Returns fragmentation header or null if not present
+ * @param ip6 header (+ data) of the packet
+ */
+// click_ip6_fragment* fragmentation_header(click_ip6* ip6_header); /* defined in ip6reassembler.cc */
+// click_ip6_fragment* fragmentation_header(click_ip6_hbh* ip6_header); /* defined in ip6reassembler.cc */
+// click_ip6_fragment* fragmentation_header(click_ip6_dest* ip6_header); /* defined in ip6reassembler.cc */
+// click_ip6_fragment* fragmentation_header(click_ip6_rthdr* ip6_header); /* defined in ip6reassembler.cc */
 
 CLICK_CXX_UNPROTECT
 #include <click/cxxunprotect.h>

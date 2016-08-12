@@ -25,6 +25,31 @@
 CLICK_DECLS
 namespace ip6 {
 
+/**
+  * @brief Give the current ip6_header as an argument and stores, if a fragmentation header was found, this fragmentation header in fragmentation_header. Otherwise stores NULL.
+  */
+/*void get_ip6_fragmentation_header(click_ip6_fragment *fragmentation_header, click_ip6 *ip6_header) {
+    uint8_t nxt = ((click_ip6*) packet->network_header())->ip6_nxt;     // the next header number
+    void *nxt_header = ((click_ip6*) packet->network_header() + 1);     // a pointer to the next header
+    while (true) {
+        if (nxt == 44) {
+            return nxt_header;      // we have found a header
+        } else if (nxt == 0) {
+            nxt = ((click_ip6_hbh*) nxt_header)->ip6h_nxt;      
+            nxt_header = (click_ip6_hbh*) nxt_header + ((click_ip6_hbh*) nxt_header)->ip6h_len + 1;      
+        } else if (nxt == 43) {
+            nxt = ((click_ip6_rthdr *) nxt_header)->ip6r_nxt;
+            nxt_header = (click_ip6_rthdr *) nxt_header + ((click_ip6_rthdr *) nxt_header)->ip6r_len + 1;
+        } else if (nxt == 60) {
+            nxt = ((click_ip6_dest*) nxt_header)->ip6d_nxt;      
+            nxt_header = (click_ip6_dest*) nxt_header + ((click_ip6_dest*) nxt_header)->ip6d_len + 1;
+        } else {
+            return 0;               // we have no header
+        }
+    }
+}
+*/
+
 /** @brief Starts at the packet's network header pointer and searches for a fragmentation extension header.
   * @return true on found, false on not found
   */
@@ -33,7 +58,7 @@ bool has_fragmentation_extension_header(Packet *packet) {
     void *nxt_header = ((click_ip6*) packet->network_header() + 1);     // a pointer to the next header
     while (true) {
         if (nxt == 44) {
-            return true;        // we have found an header
+            return true;        // we have found a header
         } else if (nxt == 0) {
             nxt = ((click_ip6_hbh*) nxt_header)->ip6h_nxt;      
             nxt_header = (click_ip6_hbh*) nxt_header + ((click_ip6_hbh*) nxt_header)->ip6h_len + 1;            

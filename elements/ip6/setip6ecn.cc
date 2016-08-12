@@ -65,7 +65,6 @@ SetIP6ECN::simple_action(Packet *p)
     // Because they need to come on position 11 and 12 of our ip6_flow and not on position 31 or 32, they need to be shifted 20 places 
     // to the left first to get them where they finally need to be in ip6_flow of our IPv6 packet, before we can OR.
     ip6->ip6_flow = ((ip6->ip6_flow & htonl(0b11111111110011111111111111111111)) | htonl(_ecn << 20));
-    click_chatter("ip6->ip6_flow %u", ip6->ip6_flow);
 
     return q;
 }

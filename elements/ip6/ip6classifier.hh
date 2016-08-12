@@ -158,11 +158,6 @@ public:
 
 private:
     Vector<ip6classification::AST> ast_list; // a list of ASTs (abstract syntax trees); there is 1 AST per pattern passed by an end-user.
-    // for performance testing only
-    Vector<Timestamp> _time_stamp_vector;
-    Vector<Timestamp> _time_stamp_vector2;
-    int _number_of_test_packets_sent = 0;
-    int  _number_of_test_packets_to_be_sent = 100000;
 };
 
 CLICK_ENDDECLS

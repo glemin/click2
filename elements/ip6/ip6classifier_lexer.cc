@@ -293,12 +293,12 @@ Lexer::lex(Vector<Token*>& tokens, ErrorHandler *errh) {      // to_be_lexed_str
                             i = skip_blanks(i);
                             if (i != -1) {
                                 i = read_word(i, current_word);
-                                token = SrcHostFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
+                                token = DstHostFactory::create_token(current_word, just_seen_a_not_keyword, an_operator);
                             } else {
                                 errh->error("operator was only followed by blanks, that is not allowed, an operator must be followed by data"); return -1;
                             }
                         } else {    // no operator was given, equality is assumed and the current word already contains the data
-                            token = SrcHostFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
+                            token = DstHostFactory::create_token(current_word, just_seen_a_not_keyword, EQUALITY);
                         }
                         tokens.push_back(token);
                         just_seen_a_not_keyword = false;

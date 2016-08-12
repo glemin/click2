@@ -17,6 +17,13 @@ CLICK_DECLS
  * If the size is greater than mtu, splits into fragments emitted on 
  * output 0.
  *
+ * Paramters:
+ * - MTU: the Maximum Transmission Unit, packet larger than this value must be breaken up 
+ * into multiple smaller packets of at most size MTU.
+ * - IPV6_HEADER_LENGTH: IPv6 header part length (standard header + extension headers).
+ * Default value is 40.
+ * - NEXT: the protocol after the IPv6 fragmentation extension header
+ *
  * =e
  * Example:
  *
@@ -28,21 +35,16 @@ CLICK_DECLS
  */
 
 class IP6Fragmenter : public Element {
-
+  // PARAMETERS TO BE SET BY THE USER
   uint32_t _MTU;        // maximum transmission unit; this is the maximum payload the layer 2 protocol we use can handle;
                         // in case of IPv6 we need to choose the _MTU so it is equal to the minimal MTU of all MTU's on the path
                         // to the destination
+  uint32_t _unfragmentable_part_length;   // tells the length of the unfragmentable part (= the part consisting of IPv6 headers)
+  uint8_t _next;                          // tells which value should be inserted as next header value in the fragmentation header
+                        
+  // OTHER VARIABLES
   uint32_t _fragment_size;  // size of each fragment sent over the network
-  
-  int _drops;
-  int _fragments;
-
-  void fragment(Packet *);
-  //int optcopy(const click_ip6 *ip1, click_ip6 *ip2);
-  
   uint32_t _id; // current fragmentation ID
-  
-  uint32_t get_length_of_and_update_unfragmentable_part(click_ip6* p, uint8_t& nxt);
 
  public:
 
@@ -54,14 +56,7 @@ class IP6Fragmenter : public Element {
   const char *processing() const		{ return PUSH; }
   int configure(Vector<String> &, ErrorHandler *) CLICK_COLD;
 
-  int drops() const				{ return _drops; }
-  int fragments() const				{ return _fragments; }
-
-  void add_handlers() CLICK_COLD;
-
   void push(int, Packet *p);
-
-
 };
 
 CLICK_ENDDECLS

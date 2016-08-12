@@ -6,6 +6,7 @@ CLICK_DECLS
 
 namespace ip6 {
     // public functions
+    void get_ip6_fragmentation_header(click_ip6_fragment *fragmentation_header, click_ip6 *ip6_header);
     bool has_fragmentation_extension_header(Packet *packet);
     uint8_t get_higher_layer_protocol(Packet *packet);
     
