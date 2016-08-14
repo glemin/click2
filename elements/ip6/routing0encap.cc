@@ -35,41 +35,46 @@ RoutingZeroEncap::~RoutingZeroEncap()
 int
 RoutingZeroEncap::configure(Vector<String> &conf, ErrorHandler *errh)
 {   
-    String unparsed_addresses;
-    
-    if (Args(conf, this, errh)
+  String unparsed_addresses;
+  
+  if (Args(conf, this, errh)
 	.read_mp("PROTO", IntArg(), _next_header)
-	.read_mp("ADDRESSES", unparsed_addresses)
+	.read_mp("ADDRESSES", StringArg(), unparsed_addresses)
 	.complete() < 0)
 	    return -1;
 	    
+	Vector<String> word_list;
 	String current_word = "";
 	IP6Address address;
+	
+	bool seen_space_recently = true;
 	for (int i = 0; i < unparsed_addresses.length(); i++) {
-	    if (isspace(unparsed_addresses[i])) {               // if we get a space, please evaluate
-	        // try to parse the word and add to list
-            if (IP6AddressArg().parse(current_word, address)) {
-                _ip6_addresses.push_back(*(in6_addr*) address.data());
-                current_word = "";  // reset the current word
-            } else {
-                return errh->error("The address '%s' is not a valid IPv6 address", current_word.c_str());
-            }
-	    } else if (i == unparsed_addresses.length()-1) {     // if we arrived at the end of the string, please evaluate, but also read the last symbol
+	    if (isspace(unparsed_addresses[i]) && !seen_space_recently) {               // if we get a space, please evaluate
+	        word_list.push_back(current_word);
+          seen_space_recently = true;
+          current_word = "";
+      } else if (isspace(unparsed_addresses[i]) && seen_space_recently) {
+          // do nothing
+      } else {
 	        // add character to current word
 	        current_word += unparsed_addresses[i];
-	        
-            // try to parse the word and add to list
-            if (IP6AddressArg().parse(current_word, address)) {
-                _ip6_addresses.push_back(*(in6_addr*) address.data());
-                current_word = "";  // reset the current word
-            } else {
-                return errh->error("The address '%s' is not a valid IPv6 address", current_word.c_str());
-            }
-	    } else {
-	        // add character to current word
-	        current_word += unparsed_addresses[i];
-	    }
+	        seen_space_recently = false;      
+      }
 	}
+	// if current_word is not empty, add this word to the words list
+	if (current_word != "") {
+	    word_list.push_back(current_word);
+  }
+	
+  // try to parse word_list and add them to _ip6_addresses
+  for (int i = 0; i < word_list.size(); i++) {
+      if (IP6AddressArg().parse(word_list[i], address)) {
+          _ip6_addresses.push_back(*(in6_addr*) address.data());
+        } else {
+            return errh->error("The address '%s' is not a valid IPv6 address", current_word.c_str());
+        }
+  }
+  
 	 _header_ext_length = 2 * _ip6_addresses.size(); /* RFC 2460 states that the header extension length is 2 times the number of addresses in a Routing 0 header */
 	 _segments_left = _ip6_addresses.size(); /* the number of still to be visited nodes is equal to all given ip6 addresses because none of them has been visited yet at the point
 	                                           of packet creation */
