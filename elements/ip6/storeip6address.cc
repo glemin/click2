@@ -56,7 +56,6 @@ StoreIP6Address::configure(Vector<String> &conf, ErrorHandler *errh)
 
     /* translate src and dst into their actual number counterparts */
     if (offset.lower() == "src") {
-        click_chatter("we zitten bij src");
         _offset = 8;
     } else if (offset.lower() == "dst") {
         _offset = 24;
@@ -74,7 +73,6 @@ StoreIP6Address::simple_action(Packet *p)
 {
     if (!_address_given) {		// if no address was explicitely given, we need to read it in via p->dst_ip6_anno()
         _address = DST_IP6_ANNO(p);
-        click_chatter("** het adres is %s", _address.unparse().c_str());
 	  }
 
     memcpy(((uint8_t*) p->network_header_offset()) + _offset, &_address, 16);
