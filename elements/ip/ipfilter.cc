@@ -84,14 +84,6 @@ unparse_word(int type, int proto, const String &word)
     return tn + tr + word;
 }
 
-/*
-* @Brief Looks up the given word "word" in 5 different databases. If a match was found in one of these, the number corresponding with
-* with will be returned as &data.
-* @Param word word is the word we are looking up in the 5 different databases and want to find its corresponding number of.
-* @Param data When the word was found it one of the 5 databases, it is returned in this variable.
-* @Return A -1 as return value means that no match was found. A -2 or any other negative value means that something went wrong.
-* When a 0 zero was returned, we have found a match and everything went as expected.
-*/
 int
 IPFilter::lookup(String word, int type, int proto, uint32_t &data,
 		 const Element *context, ErrorHandler *errh)
@@ -101,17 +93,16 @@ IPFilter::lookup(String word, int type, int proto, uint32_t &data,
 	if (NameInfo::query(NameInfo::T_IPFILTER_TYPE, context, word, &data, sizeof(uint32_t)))
 	    return (data == TYPE_SYNTAX ? -1 : TYPE_TYPE);
 
-    // query dabases with name T_IP_PROTO, T_TCP_PORT, T_UDP_PORT, T_TCP_OPT and T_ICMP_TYPE, to find a match for the given word.
-    int got[5]; // this variable checks whether a match was found or not in each corresponding database. 
-                // NameInfo::query(...) tells about success or fail by returning an int.
-    int32_t val[5]; // results of possible matches in these databases are stored in this array
+    // query each relevant database
+    int got[5];
+    int32_t val[5];
     got[0] = NameInfo::query(NameInfo::T_IP_PROTO, context, word, &val[0], sizeof(uint32_t));
     got[1] = NameInfo::query(NameInfo::T_TCP_PORT, context, word, &val[1], sizeof(uint32_t));
     got[2] = NameInfo::query(NameInfo::T_UDP_PORT, context, word, &val[2], sizeof(uint32_t));
     got[3] = NameInfo::query(NameInfo::T_TCP_OPT, context, word, &val[3], sizeof(uint32_t));
     got[4] = NameInfo::query(NameInfo::T_ICMP_TYPE, context, word, &val[4], sizeof(uint32_t));
 
-    // if no match was found, we exit
+    // exit if no match
     if (!got[0] && !got[1] && !got[2] && !got[3] && !got[4])
 	return -1;
 
