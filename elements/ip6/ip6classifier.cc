@@ -82,6 +82,7 @@ IP6Classifier::push(int, Packet *p)
         const bool matches = ast_list[i].check_whether_packet_matches(p);
         if (matches) {
             output(i).push(p);
+            return;
         }
     }
 }
