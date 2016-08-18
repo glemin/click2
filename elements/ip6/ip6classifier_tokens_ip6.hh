@@ -118,14 +118,14 @@ public:
         PrimitiveToken::print();
     }
     virtual bool check_whether_packet_matches(Packet *packet) {
-        uint8_t* ip6_dst_address_of_this_packet = ((uint8_t*) packet->network_header()) + 8;
+        uint8_t* ip6_src_address_of_this_packet = ((uint8_t*) packet->network_header()) + 8;
         if (an_operator == EQUALITY || an_operator == INEQUALITY) { // both equality and inequality work pretty similar, that is why we take them together (to save code space)
             const bool take_negated_solution = EQUALITY ? this->is_preceded_by_not_keyword : !this->is_preceded_by_not_keyword;
             // The code is made '==' setting in mind. In case either a not preceded the keyword before '==', or no not preceded a keyword before '!=', we take the negated solution
             // e.g. with "not host == 10.5.7.2" or with "host != 10.5.7.2." we need to take the negated solution.
 
             for (int i = 0; i < 16; i++) {
-                if (ip6_dst_address_of_this_packet[i] != ip6_address.s6_addr[i]) {
+                if (ip6_src_address_of_this_packet[i] != ip6_address.s6_addr[i]) {
                     return !take_negated_solution;  // the dst addresses did not match
                 }
             }
@@ -137,13 +137,13 @@ public:
             // The code is made '>=' setting in mind. In case either a not preceded the keyword before '>=', or no not preceded a keyword before '<', we take the negated solution
             // e.g. with "not host >= 10.5.7.2" or with "host < 10.5.7.2." we need to take the negated solution.
             for (int i = 0; i < 16; i++) {
-                if (ip6_dst_address_of_this_packet[i] > ip6_address.s6_addr[i]) {
+                if (ip6_src_address_of_this_packet[i] > ip6_address.s6_addr[i]) {
                     if (!take_negated_solution) {
                         return true;           // the dst addresses did not match
                     } else {
                         return false;
                     }
-                } else if (ip6_dst_address_of_this_packet[i] == ip6_address.s6_addr[i]) { // is is equality (=), so we need to read the next symbol in order to decide
+                } else if (ip6_src_address_of_this_packet[i] == ip6_address.s6_addr[i]) { // is is equality (=), so we need to read the next symbol in order to decide
                     // read the next symbol.
                 } else {            // it is less than (<)
                     if (!take_negated_solution) {
@@ -164,13 +164,13 @@ public:
             // The code is made '<=' setting in mind. In case either a not preceded the keyword before '<=', or no not preceded a keyword before '>', we take the negated solution
             // e.g. with "not host <= 10.5.7.2" or with "host > 10.5.7.2." we need to take the negated solution.       
             for (int i = 0; i < 16; i++) {
-                if (ip6_dst_address_of_this_packet[i] < ip6_address.s6_addr[i]) {
+                if (ip6_src_address_of_this_packet[i] < ip6_address.s6_addr[i]) {
                     if (!take_negated_solution) {
                         return true;           // the dst addresses did not match
                     } else {
                         return false;
                     }
-                } else if (ip6_dst_address_of_this_packet[i] == ip6_address.s6_addr[i]) { // is is equality (=), so we need to read the next symbol in order to decide
+                } else if (ip6_src_address_of_this_packet[i] == ip6_address.s6_addr[i]) { // is is equality (=), so we need to read the next symbol in order to decide
                     // read the next symbol.
                 } else {            // it is greater than (>)
                     if (!take_negated_solution) {

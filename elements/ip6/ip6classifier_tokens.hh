@@ -165,7 +165,7 @@ public:
      * @param expression An expression that possibly needs to be reversed
      * @return Leaves the expresssion unaltered when nothing when no not keyword was seen or gives back the reverse expression
      */     
-    inline bool take_inverse_on_not(bool expression) {  // TODO unused at the moment
+    inline bool take_inverse_on_not(bool expression) {
         if (is_preceded_by_not_keyword) {
             return !expression;
         } else {

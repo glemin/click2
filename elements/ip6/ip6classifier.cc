@@ -62,7 +62,7 @@ IP6Classifier::configure(Vector<String> &conf, ErrorHandler *errh)
             
             if (success >= 0) {
 // USE BELOW FOR DEBUGGING ALREADY COMBINED TOKENS
-//              ast.print();
+                ast.print();
                 ast_list.push_back(ast);    // add this AST to the list of ASTs
             }
         }

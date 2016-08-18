@@ -69,13 +69,17 @@ StoreIP6Address::configure(Vector<String> &conf, ErrorHandler *errh)
 }
 
 Packet *
-StoreIP6Address::simple_action(Packet *p)
+StoreIP6Address::simple_action(Packet *p_in)
 {
     if (!_address_given) {		// if no address was explicitely given, we need to read it in via p->dst_ip6_anno()
-        _address = DST_IP6_ANNO(p);
-	  }
-
-    memcpy(((uint8_t*) p->network_header_offset()) + _offset, &_address, 16);
+        _address = DST_IP6_ANNO(p_in); 
+    }
+    WritablePacket *p = p_in->uniqueify();
+    assert(p->has_network_header());
+    in6_addr *ip6_address_pointer = (in6_addr*) ((uint8_t*) (p->ip6_header()) + _offset);
+    *ip6_address_pointer = _address;
+    
+    return p;
 }
 
 CLICK_ENDDECLS

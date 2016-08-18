@@ -25,49 +25,39 @@
 CLICK_DECLS
 namespace ip6 {
 
-/**
-  * @brief Give the current ip6_header as an argument and stores, if a fragmentation header was found, this fragmentation header in fragmentation_header. Otherwise stores NULL.
-  */
-/*void get_ip6_fragmentation_header(click_ip6_fragment *fragmentation_header, click_ip6 *ip6_header) {
-    uint8_t nxt = ((click_ip6*) packet->network_header())->ip6_nxt;     // the next header number
-    void *nxt_header = ((click_ip6*) packet->network_header() + 1);     // a pointer to the next header
-    while (true) {
-        if (nxt == 44) {
-            return nxt_header;      // we have found a header
-        } else if (nxt == 0) {
-            nxt = ((click_ip6_hbh*) nxt_header)->ip6h_nxt;      
-            nxt_header = (click_ip6_hbh*) nxt_header + ((click_ip6_hbh*) nxt_header)->ip6h_len + 1;      
-        } else if (nxt == 43) {
-            nxt = ((click_ip6_rthdr *) nxt_header)->ip6r_nxt;
-            nxt_header = (click_ip6_rthdr *) nxt_header + ((click_ip6_rthdr *) nxt_header)->ip6r_len + 1;
-        } else if (nxt == 60) {
-            nxt = ((click_ip6_dest*) nxt_header)->ip6d_nxt;      
-            nxt_header = (click_ip6_dest*) nxt_header + ((click_ip6_dest*) nxt_header)->ip6d_len + 1;
-        } else {
-            return 0;               // we have no header
-        }
-    }
-}
-*/
-
 /** @brief Starts at the packet's network header pointer and searches for a fragmentation extension header.
   * @return true on found, false on not found
   */
 bool has_fragmentation_extension_header(Packet *packet) {
     uint8_t nxt = ((click_ip6*) packet->network_header())->ip6_nxt;     // the next header number
-    void *nxt_header = ((click_ip6*) packet->network_header() + 1);     // a pointer to the next header
-    while (true) {
+    uint8_t *nxt_header = (uint8_t*) ((click_ip6*) packet->network_header() + 1);     // a pointer to the next header
+    while ((nxt_header) < (packet->end_data() - 8)) {	// At least needs the space to read an additional extension header (which is 8 octets long)
         if (nxt == 44) {
-            return true;        // we have found a header
+	    click_chatter("found");
+            return true;        // We have found the header
         } else if (nxt == 0) {
-            nxt = ((click_ip6_hbh*) nxt_header)->ip6h_nxt;      
-            nxt_header = (click_ip6_hbh*) nxt_header + ((click_ip6_hbh*) nxt_header)->ip6h_len + 1;            
+	    click_chatter("hop by hop start");
+            nxt = ((click_ip6_hbh*) nxt_header)->ip6h_nxt;
+	    // Skip the first 8 octets
+	    nxt_header = (uint8_t*) ((uint64_t*) nxt_header + 1);
+	    // Hdr Ext Len is the lengt of this header in 8 octet units not including the first 8 octets
+            nxt_header = (uint8_t*) ((uint64_t*) nxt_header + ((click_ip6_hbh*) nxt_header)->ip6h_len);
+	    click_chatter("hop by hop end");
         } else if (nxt == 43) {
             nxt = ((click_ip6_rthdr *) nxt_header)->ip6r_nxt;
-            nxt_header = (click_ip6_rthdr *) nxt_header + ((click_ip6_rthdr *) nxt_header)->ip6r_len + 1;
+	    // Skip the first 8 octets
+	    nxt_header = (uint8_t*) ((uint64_t*) nxt_header + 1);
+	    // Hdr Ext Len is the lengt of this header in 8 octet units not including the first 8 octets
+            nxt_header = (uint8_t*) ((uint64_t*) nxt_header + ((click_ip6_rthdr *) nxt_header)->ip6r_len);
+	    click_chatter("routing end");
         } else if (nxt == 60) {
-            nxt = ((click_ip6_dest*) nxt_header)->ip6d_nxt;      
-            nxt_header = (click_ip6_dest*) nxt_header + ((click_ip6_dest*) nxt_header)->ip6d_len + 1;
+	    click_chatter("dest start");
+            nxt = ((click_ip6_dest*) nxt_header)->ip6d_nxt;
+	    // Skip the first 8 octets
+	    nxt_header = (uint8_t*) ((uint64_t*) nxt_header + 1);
+	    // Hdr Ext Len is the lengt of this header in 8 octet units not including the first 8 octets
+            nxt_header = (uint8_t*) ((uint64_t*) nxt_header + ((click_ip6_dest*) nxt_header)->ip6d_len);
+	    click_chatter("dest end");
         } else {
             return false;
         }
@@ -129,8 +119,8 @@ uint8_t get_higher_layer_protocol(Packet *packet) {
             header = (void*) fragment_header;
         } else if (nxt == 60) {
             click_ip6_dest *destination_header = (click_ip6_dest*) header;
-            // TODO set the destination header pointer in the packet
-            nxt = destination_header->ip6d_nxt;
+
+	    nxt = destination_header->ip6d_nxt;
             if (!list_contains_value(nxt_seen_list,nxt)) {
                 nxt_seen_list.push_back(nxt);
             } else {

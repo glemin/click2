@@ -86,11 +86,12 @@ CheckIP6Header::drop_it(Packet *p)
   if (_drops == 0)
     click_chatter("IP6 header check failed");
   _drops++;
-
-  if (noutputs() == 2)
+  
+  if (noutputs() == 2) {
     output(1).push(p);
-  else
+  }else  {
     p->kill();
+  }
 }
 
 Packet *
@@ -108,7 +109,7 @@ CheckIP6Header::simple_action(Packet *p)
     
     
    // check if the PayloadLength field is valid
-   if(ntohs(ip->ip6_plen) != (plen-40))
+   if(ntohs(ip->ip6_plen) > (plen-40))
      goto bad;
 
   // check version
@@ -157,12 +158,12 @@ CheckIP6Header::simple_action(Packet *p)
      output(1).push(p); // we came across an error that also outputs an icmpv6 error message
      goto bad; // bad drops the original packet
    }
-   
-  p->set_ip6_header(ip);
-  
 
+  
+  p->set_ip6_header(ip);
 
   output(0).push(p);
+  return 0;
 
  bad:
   drop_it(p);
