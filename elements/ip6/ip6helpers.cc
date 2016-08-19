@@ -30,42 +30,37 @@ namespace ip6 {
   */
 bool has_fragmentation_extension_header(Packet *packet) {
     uint8_t nxt = ((click_ip6*) packet->network_header())->ip6_nxt;     // the next header number
-    uint8_t *nxt_header = (uint8_t*) ((click_ip6*) packet->network_header() + 1);     // a pointer to the next header
-    while ((nxt_header) < (packet->end_data() - 8)) {	// At least needs the space to read an additional extension header (which is 8 octets long)
+    uint8_t len = 0;
+    uint64_t *nxt_header = (uint64_t*) ((click_ip6*) packet->network_header() + 1);     // a pointer to the next header
+    while ((nxt_header) < (((uint64_t*) packet->end_data()) - 1)) {	// At least needs the space to read an additional extension header (which is 8 octets long)
         if (nxt == 44) {
-	    click_chatter("found");
             return true;        // We have found the header
         } else if (nxt == 0) {
-	    click_chatter("hop by hop start");
             nxt = ((click_ip6_hbh*) nxt_header)->ip6h_nxt;
+	    len = ((click_ip6_rthdr *) nxt_header)->ip6r_len;
 	    // Skip the first 8 octets
-	    nxt_header = (uint8_t*) ((uint64_t*) nxt_header + 1);
+	    nxt_header = nxt_header + 1;
 	    // Hdr Ext Len is the lengt of this header in 8 octet units not including the first 8 octets
-            nxt_header = (uint8_t*) ((uint64_t*) nxt_header + ((click_ip6_hbh*) nxt_header)->ip6h_len);
-	    click_chatter("hop by hop end");
+            nxt_header += len;
         } else if (nxt == 43) {
             nxt = ((click_ip6_rthdr *) nxt_header)->ip6r_nxt;
+	    len = ((click_ip6_rthdr *) nxt_header)->ip6r_len;
 	    // Skip the first 8 octets
-	    nxt_header = (uint8_t*) ((uint64_t*) nxt_header + 1);
+	    nxt_header = nxt_header + 1;
 	    // Hdr Ext Len is the lengt of this header in 8 octet units not including the first 8 octets
-            nxt_header = (uint8_t*) ((uint64_t*) nxt_header + ((click_ip6_rthdr *) nxt_header)->ip6r_len);
-	    click_chatter("routing end");
+            nxt_header += len;
         } else if (nxt == 60) {
-	    click_chatter("dest start");
             nxt = ((click_ip6_dest*) nxt_header)->ip6d_nxt;
+	    len = ((click_ip6_rthdr *) nxt_header)->ip6r_len;
 	    // Skip the first 8 octets
-	    nxt_header = (uint8_t*) ((uint64_t*) nxt_header + 1);
+	    nxt_header = nxt_header + 1;
 	    // Hdr Ext Len is the lengt of this header in 8 octet units not including the first 8 octets
-            nxt_header = (uint8_t*) ((uint64_t*) nxt_header + ((click_ip6_dest*) nxt_header)->ip6d_len);
-	    click_chatter("dest end");
+            nxt_header += len;
         } else {
             return false;
         }
     }
 }
-
-
-
 
 /** @brief Returns the higher layer protocol of this IPv6 packet.
   * In case extension headers are present, follow the extension
